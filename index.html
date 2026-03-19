@@ -4,21 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Хохлома | Тату, барбершоп, массаж в Пензе</title>
-    
     <!-- SEO -->
     <meta name="description" content="Студия Хохлома в Пензе: тату, барбершоп, пирсинг, массаж. Команда профессионалов, современное оборудование, стерильность. Запись онлайн.">
     <meta name="keywords" content="тату пенза, барбершоп пенза, пирсинг пенза, массаж пенза, хохлома студия">
-    
-    <!-- Open Graph (для соцсетей) -->
     <meta property="og:title" content="Хохлома - тату и барбершоп в Пензе">
     <meta property="og:description" content="Команда профессионалов. Запись онлайн.">
     <meta property="og:image" content="assets/images/og-preview.jpg">
     <meta property="og:url" content="https://hohloma-tattoo.ru">
     
-    <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
-    
-    <!-- CSS -->
     <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
@@ -26,45 +20,57 @@
         <div class="preloader-text">HOHLOMA</div>
     </div>
 
-    <header class="header" id="header">
-        <div class="container header__container">
-            <a href="/" class="logo">
-                <img src="assets/images/logo/logo.svg" alt="Хохлома студия" class="logo__img">
-            </a>
-            
-            <!-- Переключатель Tattoo/Barber -->
-            <div class="service-switcher">
-                <button class="service-switcher__btn service-switcher__btn--active" data-service="tattoo">
-                    <span class="service-switcher__icon">⚡</span>
-                    Tattoo
-                </button>
-                <button class="service-switcher__btn" data-service="barber">
-                    <span class="service-switcher__icon">✂️</span>
-                    Barbershop
-                </button>
+    <!-- Шапка с навигацией -->
+<header class="header" id="header">
+    <div class="container header__container">
+        <!-- Левый блок - Адрес -->
+        <div class="header__left">
+            <div class="header__address">
+                <span class="header__address-icon"></span>
+                <span class="header__address-text">г. Пенза, ул. Московская, 69</span>
             </div>
-            
+        </div>
+        
 
+        <div class="header__center">
+            <a href="/" class="logo">
+                <img src="assets/images/logo-ot-mileny.png" alt="Хохлома студия" class="logo__img">
+            </a>
+        </div>
+        
+
+        <div class="header__right">
             <div class="header__contacts">
                 <a href="tel:88412248398" class="header__phone">8 (8412) 248-398</a>
                 <span class="header__schedule">10:00–20:00 ежедневно</span>
             </div>
-            
-
-            <button class="burger" id="burger" aria-label="Меню">
-                <span></span><span></span><span></span>
-            </button>
         </div>
         
 
+        <button class="burger" id="burger" aria-label="Меню">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+        
+
         <nav class="nav" id="nav">
-            <div class="container nav__container">
-                <ul class="nav__list">
-                    <li><a href="#about" class="nav__link">О студии</a></li>
-                    <li><a href="#team" class="nav__link">Команда</a></li>
-                    <li><a href="#portfolio" class="nav__link">Портфолио</a></li>
-                    <li><a href="#services" class="nav__link">Услуги</a></li>
-                    <li><a href="#price" class="nav__link">Прайс</a></li>
+    <div class="container nav__container">
+        <ul class="nav__list">
+            <li><a href="#about" class="nav__link">О студии</a></li>
+            <li><a href="#team" class="nav__link">Команда</a></li>
+            <li><a href="#portfolio" class="nav__link">Портфолио</a></li>
+            <li><a href="#services" class="nav__link">Услуги</a></li>
+            <li><a href="#price" class="nav__link">Прайс</a></li>
+            <li>
+                <button class="nav__link nav__link--switcher" data-service="tattoo">
+                    Татуировки
+                </button>
+            </li>
+            <li>
+                <button class="nav__link nav__link--switcher" data-service="barber">
+                    Барбершоп
+                </button>
+            </li>
                     <li><a href="#booking" class="nav__link nav__link--primary">Записаться</a></li>
                 </ul>
             </div>
@@ -76,9 +82,9 @@
         <div id="tattoo-content" class="service-content service-content--active">
             
             <!-- Hero секция (тату) -->
-            <section class="hero" style="background-image: url('assets/images/studio/tattoo-hero-bg.jpg');">
+            <section class="hero" style="background-image: url('https://i.pinimg.com/736x/95/80/38/958038ac681f815c9b5da63eb6093f64.jpg');;">
                 <div class="container hero__container">
-                    <h1 class="hero__title">Тату-студия <span>Хохлома</span></h1>
+                    <h1 class="hero__title">Тату-студия <span>hohloma</span></h1>
                     <p class="hero__subtitle">Индивидуальный подход, стерильность, профессиональные мастера</p>
                     <div class="hero__actions">
                         <a href="#portfolio" class="btn btn--outline">Портфолио</a>
@@ -118,9 +124,9 @@
         <div id="barber-content" class="service-content">
             
             <!-- Hero секция (барбершоп) -->
-            <section class="hero" style="background-image: url('assets/images/studio/barber-hero-bg.jpg');">
+            <section class="hero" style="background-image: url('https://i.pinimg.com/originals/c6/64/d1/c664d1b51ab0350779ae31684ac75322.jpg');">
                 <div class="container hero__container">
-                    <h1 class="hero__title">Barbershop <span>Хохлома</span></h1>
+                    <h1 class="hero__title">Барбершоп <span>hohloma</span></h1>
                     <p class="hero__subtitle">Мужские стрижки, бритьё, моделирование бороды</p>
                     <div class="hero__actions">
                         <a href="#portfolio" class="btn btn--outline">Наши работы</a>
@@ -194,22 +200,22 @@
         </div>
     </div>
 
-    <!-- Подключаем JS в правильном порядке -->
-    <script src="js/vendor/gsap.min.js"></script>
-    <script src="js/vendor/ScrollTrigger.min.js"></script>
-    <script src="js/vendor/flatpickr.js"></script>
-    
-    <!-- Модули -->
-    <script src="js/modules/mastersData.js"></script>
-    <script src="js/modules/serviceSwitcher.js"></script>
-    <script src="js/modules/calendar.js"></script>
-    <script src="js/modules/bookingForm.js"></script>
-    <script src="js/modules/gallery.js"></script>
-    <script src="js/modules/animations.js"></script>
-    <script src="js/modules/mobileMenu.js"></script>
-    <script src="js/modules/forms.js"></script>
-    
-    <!-- Главный файл инициализации -->
-    <script src="js/main.js"></script>
+<!-- Сначала вендоры (обычные скрипты) -->
+<script src="js/vendor/gsap.min.js"></script>
+<script src="js/vendor/ScrollTrigger.min.js"></script>
+<script src="js/vendor/flatpickr.js"></script>
+
+<!-- Потом модули (с type="module") -->
+<script type="module" src="js/modules/mastersData.js"></script>
+<script type="module" src="js/modules/serviceSwitcher.js"></script>
+<script type="module" src="js/modules/calendar.js"></script>
+<script type="module" src="js/modules/bookingForm.js"></script>
+<script type="module" src="js/modules/gallery.js"></script>
+<script type="module" src="js/modules/animations.js"></script>
+<script type="module" src="js/modules/mobileMenu.js"></script>
+<script type="module" src="js/modules/forms.js"></script>
+
+<!-- Главный файл тоже type="module" -->
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,148 @@
+@media (max-width: 1280px) {
+    .container {
+        max-width: 1024px;
+    }
+    
+    .section-title {
+        font-size: clamp(2.5rem, 4vw, 3rem);
+    }
+}
+
+@media (max-width: 1024px) {
+    .container {
+        max-width: 900px;
+    }
+    
+    .hero__title {
+        font-size: clamp(2.5rem, 6vw, 4rem);
+    }
+    
+    .portfolio__grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 25px;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .section-title::after {
+        width: 60px;
+    }
+    
+    .team__grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    
+    .portfolio__filters {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .portfolio__filter {
+        width: 100%;
+        max-width: 300px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0 15px;
+    }
+    
+    .section-title {
+        font-size: 1.8rem;
+    }
+    
+    .btn {
+        padding: 0.6rem 1.5rem;
+    }
+    
+    .btn--large {
+        padding: 0.8rem 2rem;
+        font-size: 1rem;
+    }
+    
+    .modal__content {
+        padding: 20px;
+    }
+    
+    .modal__message {
+        font-size: 1rem;
+    }
+}
+
+/* Для очень маленьких экранов */
+@media (max-width: 360px) {
+    .hero__title {
+        font-size: 2rem;
+    }
+    
+    .hero__subtitle {
+        font-size: 1rem;
+    }
+}
+
+/* Для устройств с высоким DPI */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .hero {
+        background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('../images/hero-bg@2x.jpg');
+    }
+}
+
+/* Поддержка темной темы браузера */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-black: #0a0a0a;
+        --color-dark: #1a1a1a;
+    }
+}
+
+/* Для устройств с тач-экраном убираем ховеры */
+@media (hover: none) and (pointer: coarse) {
+    .btn:hover::before,
+    .team-card:hover,
+    .portfolio__item:hover .portfolio__overlay {
+        display: none;
+    }
+    
+    .portfolio__overlay {
+        opacity: 0.7;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    }
+    
+    .portfolio__info {
+        transform: translateY(0);
+    }
+}
+
+/* Печатная версия */
+@media print {
+    .header,
+    .footer,
+    .booking,
+    .btn {
+        display: none;
+    }
+    
+    body {
+        background: white;
+        color: black;
+    }
+    
+    .hero {
+        min-height: auto;
+        background: none;
+    }
+    
+    .hero::before {
+        display: none;
+    }
+}

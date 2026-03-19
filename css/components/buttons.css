@@ -58,7 +58,7 @@
     transform: translateY(-2px);
 }
 
-/* Размеры */
+
 .btn--small {
     padding: 0.5rem 1.5rem;
     font-size: 0.9rem;
@@ -73,7 +73,7 @@
     width: 100%;
 }
 
-/* Иконки в кнопках */
+
 .btn__icon {
     font-size: 1.2em;
 }
@@ -84,7 +84,7 @@
     width: 100%;
 }
 
-/* Кнопка в футере (если нужна) */
+
 .btn--scroll-top {
     position: fixed;
     bottom: 2rem;

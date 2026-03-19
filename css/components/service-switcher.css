@@ -62,6 +62,14 @@
     z-index: 1;
 }
 
+.service-content {
+    display: none;
+}
+
+.service-content--active {
+    display: block !important; /* Временно добавь !important для теста */
+}
+
 /* Адаптив */
 @media (max-width: 768px) {
     .service-switcher {

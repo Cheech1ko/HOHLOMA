@@ -5,25 +5,38 @@
     width: 100%;
     background: rgba(10, 10, 10, 0.95);
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(201, 162, 39, 0.2);
-    z-index: var(--z-header);
-    transition: transform var(--transition-normal);
-}
-
-.header--hidden {
-    transform: translateY(-100%);
+    z-index: 1000; /* Должен быть выше, чем у hero */
 }
 
 .header__container {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
     height: var(--header-height);
+    gap: 2rem;
 }
 
+
+.header__left {
+    display: flex;
+    justify-content: flex-start;
+}
+
+
+.header__center {
+    display: flex;
+    justify-content: center;
+}
+
+
+.header__right {
+    display: flex;
+    justify-content: flex-end;
+}
+
+
 .logo {
-    flex-shrink: 0;
+    display: block;
     transition: opacity var(--transition-fast);
 }
 
@@ -32,14 +45,33 @@
 }
 
 .logo__img {
-    height: 50px;
+    height: 100px;
     width: auto;
+    max-width: 200px;
+    object-fit: contain;
 }
+
+
+.header__address {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-off-white);
+    font-size: 0.95rem;
+}
+
+.header__address-icon {
+    font-size: 1.2rem;
+    color: var(--color-gold);
+}
+
+.header__address-text {
+    white-space: nowrap;
+}
+
 
 .header__contacts {
     text-align: right;
-    margin-left: auto;
-    margin-right: 30px;
 }
 
 .header__phone {
@@ -50,6 +82,7 @@
     display: block;
     line-height: 1.3;
     transition: color var(--transition-fast);
+    white-space: nowrap;
 }
 
 .header__phone:hover {
@@ -61,7 +94,9 @@
     color: var(--color-off-white);
     opacity: 0.7;
     display: block;
+    white-space: nowrap;
 }
+
 
 .burger {
     display: none;
@@ -73,6 +108,7 @@
     border: none;
     cursor: pointer;
     padding: 0;
+    z-index: 10;
 }
 
 .burger span {
@@ -97,6 +133,7 @@
 .nav {
     background: var(--color-dark);
     border-top: 1px solid var(--color-gray);
+    border-bottom: 1px solid var(--color-gray);
 }
 
 .nav__list {
@@ -104,47 +141,78 @@
     justify-content: center;
     align-items: center;
     list-style: none;
-    gap: 2rem;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
 }
 
+/* Базовые стили для всех пунктов навбара */
 .nav__link {
     color: var(--color-white);
     text-decoration: none;
     font-weight: 500;
-    padding: 1rem 0;
+    padding: 0.75rem 1.2rem;
     display: inline-block;
     position: relative;
-    transition: color var(--transition-fast);
+    transition: all var(--transition-fast);
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
 }
 
-.nav__link::after {
+/* Эффект подчеркивания для всех пунктов (кроме активного переключателя) */
+.nav__link:not(.nav__link--active)::after {
     content: '';
     position: absolute;
     bottom: 0.5rem;
-    left: 0;
+    left: 50%;
+    transform: translateX(-50%);
     width: 0;
     height: 2px;
     background-color: var(--color-gold);
     transition: width var(--transition-normal);
 }
 
+.nav__link:not(.nav__link--active):hover::after {
+    width: 60%;
+}
+
+/* Стили для обычных ссылок */
 .nav__link:hover {
     color: var(--color-gold);
 }
 
-.nav__link:hover::after {
-    width: 100%;
+/* Стили для кнопок-переключателей */
+.nav__link--switcher {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-left: 1px solid transparent;
+    border-right: 1px solid transparent;
 }
 
+/* Активное состояние переключателя */
+.nav__link--switcher.nav__link--active {
+    color: var(--color-gold);
+    background: rgba(201, 162, 39, 0.1);
+    border-left-color: var(--color-gold);
+    border-right-color: var(--color-gold);
+}
+
+/* Ховер для переключателя */
+.nav__link--switcher:hover {
+    background: rgba(201, 162, 39, 0.05);
+}
+
+/* Кнопка записи */
 .nav__link--primary {
     color: var(--color-gold);
     border: 1px solid var(--color-gold);
-    padding: 0.5rem 1.5rem;
     border-radius: var(--border-radius);
-}
-
-.nav__link--primary::after {
-    display: none;
+    margin-left: 8rem;
+    background: transparent;
 }
 
 .nav__link--primary:hover {
@@ -152,33 +220,24 @@
     color: var(--color-black);
 }
 
+.nav__link--primary:hover::after {
+    display: none;
+}
+
+/* Разделитель между пунктами (опционально) */
+.nav__list li:not(:last-child) {
+    position: relative;
+}
+
+/* Адаптив */
 @media (max-width: 1024px) {
-    .header__contacts {
-        margin-right: 20px;
-    }
-    
-    .header__phone {
-        font-size: 1rem;
-    }
-    
-    .header__schedule {
-        font-size: 0.75rem;
-    }
-    
-    .nav__list {
-        gap: 1.5rem;
+    .nav__link {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
     }
 }
 
 @media (max-width: 768px) {
-    .burger {
-        display: flex;
-    }
-    
-    .header__contacts {
-        display: none;
-    }
-    
     .nav {
         position: fixed;
         top: var(--header-height);
@@ -189,6 +248,7 @@
         transform: translateX(-100%);
         transition: transform var(--transition-normal);
         overflow-y: auto;
+        border-top: none;
     }
     
     .nav--active {
@@ -197,12 +257,28 @@
     
     .nav__list {
         flex-direction: column;
-        padding: 2rem;
-        gap: 1rem;
+        padding: 2rem 1rem;
+        gap: 0.5rem;
     }
     
     .nav__link {
-        font-size: 1.2rem;
-        padding: 0.75rem 0;
+        width: 100%;
+        text-align: center;
+        padding: 1rem;
+        font-size: 1.1rem;
+        border-bottom: 1px solid var(--color-gray);
+    }
+    
+    .nav__link--switcher {
+        border-left: none;
+        border-right: none;
+        background: rgba(255, 255, 255, 0.03);
+    }
+    
+    .nav__link--primary {
+        margin-left: 0;
+        margin-top: 1rem;
+        width: 100%;
+        text-align: center;
     }
 }

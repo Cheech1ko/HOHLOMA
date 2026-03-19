@@ -22,7 +22,6 @@
     height: var(--header-height);
 }
 
-/* Логотип */
 .logo {
     flex-shrink: 0;
     transition: opacity var(--transition-fast);
@@ -37,7 +36,6 @@
     width: auto;
 }
 
-/* Контакты в шапке */
 .header__contacts {
     text-align: right;
     margin-left: auto;
@@ -65,7 +63,6 @@
     display: block;
 }
 
-/* Бургер-меню */
 .burger {
     display: none;
     flex-direction: column;
@@ -97,7 +94,6 @@
     transform: translateY(-9px) rotate(-45deg);
 }
 
-/* Навигация */
 .nav {
     background: var(--color-dark);
     border-top: 1px solid var(--color-gray);
@@ -156,7 +152,6 @@
     color: var(--color-black);
 }
 
-/* Адаптив для шапки */
 @media (max-width: 1024px) {
     .header__contacts {
         margin-right: 20px;

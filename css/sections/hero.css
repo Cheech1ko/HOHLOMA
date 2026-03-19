@@ -1,0 +1,104 @@
+.hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin-top: calc(var(--header-height) * -1);
+    padding-top: var(--header-height);
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 100%);
+    z-index: 1;
+}
+
+.hero__container {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+}
+
+.hero__title {
+    font-family: Brush Script MT, Brush Script Std, cursive;
+    font-size: clamp(3rem, 8vw, 6rem);
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    max-width: 800px;
+    animation: fadeInUp 1s ease;
+}
+
+.hero__title span {
+    color: var(--color-gold);
+    display: block;
+    font-size: 0.8em;
+    margin-top: -0.2em;
+}
+
+.hero__subtitle {
+    font-size: clamp(1.2rem, 3vw, 1.5rem);
+    color: var(--color-off-white);
+    margin-bottom: 2.5rem;
+    max-width: 600px;
+    opacity: 0.9;
+    animation: fadeInUp 1s ease 0.2s both;
+}
+
+.hero__actions {
+    display: flex;
+    gap: 1.5rem;
+    animation: fadeInUp 1s ease 0.4s both;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Специфичные стили для тату-раздела */
+#tattoo-content .hero::before {
+    background: linear-gradient(90deg, rgba(178,34,34,0.3) 0%, rgba(0,0,0,0.7) 100%);
+}
+
+/* Специфичные стили для барбершопа */
+#barber-content .hero::before {
+    background: linear-gradient(90deg, rgba(44,62,80,0.4) 0%, rgba(0,0,0,0.8) 100%);
+}
+
+/* Адаптив */
+@media (max-width: 768px) {
+    .hero__actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .hero__actions .btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero__title {
+        font-size: clamp(2.5rem, 6vw, 3rem);
+    }
+    
+    .hero__subtitle {
+        font-size: 1.1rem;
+    }
+}

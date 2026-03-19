@@ -4,7 +4,7 @@ window.addEventListener('load', function() {
     if (preloader) {
         preloader.classList.add('preloader--hidden');
 
-        this.setTimeout(() => {
+        setTimeout(() => {
             preloader.style.display = 'none';
         }, 500);
     }

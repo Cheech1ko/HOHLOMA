@@ -117,7 +117,50 @@
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(201, 162, 39, 0.3);
 }
+/* Группы мастеров */
+.team__group {
+    margin-bottom: 60px;
+}
 
+.team__group:last-child {
+    margin-bottom: 0;
+}
+
+.team__group-title {
+    font-size: 2rem;
+    color: var(--color-gold);
+    margin-bottom: 30px;
+    text-align: center;
+    position: relative;
+    font-family: var(--font-headers);
+    letter-spacing: 2px;
+}
+
+.team__group-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+}
+
+/* Специальный стиль для топ-мастеров */
+.team-card--top .team-card__image-wrapper {
+    box-shadow: 0 0 0 3px var(--color-gold), var(--shadow-lg);
+    transform: scale(1.02);
+}
+
+.team-card--top .team-card__name {
+    color: var(--color-gold);
+}
+
+.team-card--top .team-card__specialty {
+    color: var(--color-gold-light);
+    font-weight: 700;
+}
 
 #tattoo-content .team-card__specialty {
     color: var(--color-gold);
@@ -159,5 +202,18 @@
     
     .team-card__image-wrapper {
         max-width: 220px;
+    }
+}
+@media (max-width: 768px) {
+    .team__group {
+        margin-bottom: 40px;
+    }
+    
+    .team__group-title {
+        font-size: 1.6rem;
+    }
+    
+    .team-card--top .team-card__image-wrapper {
+        transform: scale(1);
     }
 }

@@ -4,6 +4,7 @@ import { initMastersData } from './modules/mastersData.js';
 import { initGallery } from './modules/gallery.js';
 import { initForms } from './modules/forms.js';
 import { initAnimations } from './modules/animations.js';
+import { initBookingForm } from './modules/bookingForm.js';
 
 window.addEventListener('load', function() {
     console.log('Page fully loaded');
@@ -29,6 +30,7 @@ function initApp() {
         initMastersData();
         initGallery();
         initForms();
+        initBookingForm();
         
         setTimeout(() => {
             initAnimations();

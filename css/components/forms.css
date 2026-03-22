@@ -1,0 +1,109 @@
+.weekend-notice {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    background: rgba(201, 162, 39, 0.15);
+    border: 1px solid var(--color-gold);
+    border-radius: var(--border-radius);
+    padding: 10px 15px;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: var(--color-gold);
+}
+
+.weekend-notice__icon {
+    font-size: 1.2rem;
+}
+
+.flatpickr-calendar {
+    background: var(--color-dark) !important;
+    border: 1px solid var(--color-gold) !important;
+    border-radius: var(--border-radius) !important;
+    box-shadow: var(--shadow-lg) !important;
+    font-family: var(--font-main) !important;
+}
+
+/* Заголовок месяца */
+.flatpickr-months {
+    background: var(--color-black) !important;
+    border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+}
+
+.flatpickr-month {
+    color: var(--color-gold) !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+}
+
+/* Стрелки навигации */
+.flatpickr-prev-month,
+.flatpickr-next-month {
+    fill: var(--color-gold) !important;
+}
+
+.flatpickr-prev-month:hover,
+.flatpickr-next-month:hover {
+    fill: var(--color-gold-light) !important;
+}
+
+/* Дни недели */
+.flatpickr-weekday {
+    color: var(--color-gold) !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+}
+
+/* Дни месяца */
+.flatpickr-day {
+    color: var(--color-white) !important;
+    border-radius: 50% !important;
+    transition: all 0.2s ease !important;
+}
+
+.flatpickr-day:hover {
+    background: var(--color-gray) !important;
+    border-color: var(--color-gold) !important;
+}
+
+/* Выбранный день */
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    background: var(--color-gold) !important;
+    border-color: var(--color-gold) !important;
+    color: var(--color-black) !important;
+    font-weight: bold !important;
+}
+
+/* Выходные дни (суббота, воскресенье) */
+.flatpickr-day.weekend {
+    color: var(--color-gold-light) !important;
+}
+
+/* Текущий день */
+.flatpickr-day.today {
+    border-color: var(--color-gold) !important;
+    background: rgba(201, 162, 39, 0.2) !important;
+}
+
+.flatpickr-day.today.selected {
+    border-color: var(--color-gold) !important;
+    background: var(--color-gold) !important;
+}
+
+/* Заблокированные дни */
+.flatpickr-day.disabled,
+.flatpickr-day.disabled:hover {
+    color: var(--color-gray) !important;
+    background: transparent !important;
+    border-color: transparent !important;
+}
+
+/* Контейнер выбора года/месяца */
+.numInputWrapper {
+    color: var(--color-gold) !important;
+}
+
+.numInputWrapper input {
+    color: var(--color-gold) !important;
+    background: var(--color-dark) !important;
+}

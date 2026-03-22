@@ -165,10 +165,9 @@ function renderMasterCard(master) {
                 <p class="team-card__experience">Стаж: ${master.experience}</p>
                 <p class="team-card__bio">${master.bio}</p>
                 <button class="team-card__book" 
-                        data-master-id="${master.id}"
-                        onclick="document.getElementById('booking').scrollIntoView({behavior: 'smooth'})">
-                    Записаться
-                </button>
+                data-master-id="${master.id}">
+            Записаться
+            </button>
             </div>
         </div>
     `;
@@ -178,7 +177,7 @@ export function updateMastersByService(service) {
     if (service == 'tattoo') {
         renderMasters('tattoo-masters-grid', MASTERS_DATA.tattoo);
     } else if (service === 'barber') {
-        renderMasters('barber-master-grid', MASTERS_DATA.barber);
+        renderMasters('barber-masters-grid', MASTERS_DATA.barber);
     }
 }
 

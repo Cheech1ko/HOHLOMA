@@ -175,6 +175,23 @@
     border-radius: 3px;
 }
 
+.modal__icon {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.modal__icon--success {
+    color: #28a745;
+}
+
+.modal__icon--error {
+    color: #dc3545;
+}
+
+.modal__icon--info {
+    color: var(--color-gold);
+}
 @keyframes modalFadeIn {
     from {
         opacity: 0;

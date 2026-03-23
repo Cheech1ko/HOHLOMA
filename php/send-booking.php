@@ -1,9 +1,6 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 
-// Настройки (временно сохраняем в файл для теста)
-$logFile = __DIR__ . '/bookings.log';
-
 // Получаем данные
 $service = htmlspecialchars($_POST['service'] ?? '');
 $master = htmlspecialchars($_POST['master'] ?? '');
@@ -52,10 +49,21 @@ if (!empty($errors)) {
     exit;
 }
 
-// Сохраняем в лог-файл
-$logEntry = date('Y-m-d H:i:s') . " | $name | $phone | $serviceName | $master | $date $time | $comment\n";
-file_put_contents($logFile, $logEntry, FILE_APPEND);
+// Сохраняем в файл (временное решение)
+$logFile = __DIR__ . '/bookings.csv';
+$exists = file_exists($logFile);
+$handle = fopen($logFile, 'a');
 
-// Отправляем ответ об успехе
+// Если файл новый, добавляем заголовки
+if (!$exists) {
+    fputcsv($handle, ['Дата записи', 'Имя', 'Телефон', 'Услуга', 'Мастер', 'Дата/Время', 'Комментарий']);
+}
+
+// Записываем данные
+$row = [date('Y-m-d H:i:s'), $name, $phone, $serviceName, $master, "$date $time", $comment];
+fputcsv($handle, $row);
+fclose($handle);
+
+// Успешный ответ
 echo json_encode(['success' => true], JSON_UNESCAPED_UNICODE);
 ?>

@@ -1,3 +1,5 @@
+import { getMastersByService, MASTERS_DATA } from './mastersData.js';
+
 export function initBookingForm() {
     console.log('Initializing booking form...');
     
@@ -11,58 +13,63 @@ export function initBookingForm() {
         return;
     }
     
+    // ВСТАВЛЯЕМ ФОРМУ
     if (modalBody) {
         modalBody.innerHTML = `
             <form id="booking-form" class="booking-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Услуга *</label>
-                        <select id="service" name="service" class="form-select" required>
-                            <option value="">— Выберите услугу —</option>
-                            <option value="tattoo-individual">Татуировка (индивидуальный эскиз)</option>
-                            <option value="tattoo-catalog">Татуировка (из каталога)</option>
-                            <option value="tattoo-cover">Перекрытие/исправление тату</option>
-                            <option value="piercing-ear">Пирсинг уха</option>
-                            <option value="piercing-nose">Пирсинг носа</option>
-                            <option value="piercing-lip">Пирсинг губы</option>
-                            <option value="piercing-eyebrow">Пирсинг брови</option>
-                            <option value="piercing-tongue">Пирсинг языка</option>
-                            <option value="piercing-navel">Пирсинг пупка</option>
-                            <option value="piercing-intimate">Интимный пирсинг</option>
-                            <option value="massage-classic">Классический массаж</option>
-                            <option value="massage-sport">Спортивный массаж</option>
-                            <option value="massage-anticellulite">Антицеллюлитный массаж</option>
-                            <option value="barber-haircut-men">Мужская стрижка</option>
-                            <option value="barber-haircut-kids">Детская стрижка</option>
-                            <option value="barber-beard-modeling">Моделирование бороды</option>
-                            <option value="barber-beard-care">Уход за бородой</option>
-                            <option value="barber-shave-classic">Классическое бритьё</option>
-                            <option value="barber-shave-razor">Бритьё опасной бритвой</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Мастер *</label>
-                        <select id="master" name="master" class="form-select" required disabled>
-                            <option value="">— Сначала выберите услугу —</option>
-                        </select>
+                <!-- ШАГ 1: УСЛУГА -->
+                <div class="form-group">
+                    <label class="form-label">Услуга *</label>
+                    <select id="service" name="service" class="form-select" required>
+                        <option value="">— Выберите услугу —</option>
+                        <option value="tattoo-individual">Татуировка (индивидуальный эскиз)</option>
+                        <option value="tattoo-catalog">Татуировка (из каталога)</option>
+                        <option value="tattoo-cover">Перекрытие/исправление тату</option>
+                        <option value="piercing-ear">Пирсинг уха</option>
+                        <option value="piercing-nose">Пирсинг носа</option>
+                        <option value="piercing-lip">Пирсинг губы</option>
+                        <option value="piercing-eyebrow">Пирсинг брови</option>
+                        <option value="piercing-tongue">Пирсинг языка</option>
+                        <option value="piercing-navel">Пирсинг пупка</option>
+                        <option value="piercing-intimate">Интимный пирсинг</option>
+                        <option value="massage-classic">Классический массаж</option>
+                        <option value="massage-sport">Спортивный массаж</option>
+                        <option value="massage-anticellulite">Антицеллюлитный массаж</option>
+                        <option value="barber-haircut-men">Мужская стрижка</option>
+                        <option value="barber-haircut-kids">Детская стрижка</option>
+                        <option value="barber-beard-modeling">Моделирование бороды</option>
+                        <option value="barber-beard-care">Уход за бородой</option>
+                        <option value="barber-shave-classic">Классическое бритьё</option>
+                        <option value="barber-shave-razor">Бритьё опасной бритвой</option>
+                    </select>
+                </div>
+                
+                <!-- ШАГ 2: МАСТЕР (появляется после выбора услуги) -->
+                <div class="form-group" id="master-group" style="display: none;">
+                    <label class="form-label">Мастер *</label>
+                    <select id="master" name="master" class="form-select" required disabled>
+                        <option value="">— Сначала выберите услугу —</option>
+                    </select>
+                </div>
+                
+                <!-- ШАГ 3: ДАТА И ВРЕМЯ (появляются после выбора мастера) -->
+                <div id="datetime-group" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Дата *</label>
+                            <input type="text" id="date" name="date" class="form-input" placeholder="ДД.ММ.ГГГГ" required readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Время *</label>
+                            <select id="time" name="time" class="form-select" required disabled>
+                                <option value="">— Сначала выберите дату —</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Дата *</label>
-                        <input type="text" id="date" name="date" class="form-input" placeholder="ДД.ММ.ГГГГ" required readonly>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Время *</label>
-                        <select id="time" name="time" class="form-select" required disabled>
-                            <option value="">— Сначала выберите дату —</option>
-                        </select>
-                    </div>
-                </div>
-                
+                <!-- КОНТАКТНЫЕ ДАННЫЕ (всегда видны) -->
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Ваше имя *</label>
@@ -85,32 +92,56 @@ export function initBookingForm() {
                     <label for="policy">Я согласен на обработку персональных данных</label>
                 </div>
                 
-                <button type="submit" class="btn btn--primary btn--large btn--full">Записаться</button>
+                <button type="submit" class="btn btn--primary btn--large btn--full" id="submit-btn" style="display: none;">Записаться</button>
             </form>
         `;
         console.log('Form inserted into modal');
     }
     
+    // Функция открытия модалки
     window.openBookingModal = function() {
         console.log('Opening modal...');
         modal.classList.add('modal-booking--active');
         document.body.style.overflow = 'hidden';
+        resetForm();
     };
     
-    function closeModal() {
-        modal.classList.remove('modal-booking--active');
-        document.body.style.overflow = '';
+    function resetForm() {
+        const form = document.getElementById('booking-form');
+        if (form) form.reset();
+        
+        const masterGroup = document.getElementById('master-group');
+        const datetimeGroup = document.getElementById('datetime-group');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        if (masterGroup) masterGroup.style.display = 'none';
+        if (datetimeGroup) datetimeGroup.style.display = 'none';
+        if (submitBtn) submitBtn.style.display = 'none';
+        
+        const masterSelect = document.getElementById('master');
+        if (masterSelect) {
+            masterSelect.innerHTML = '<option value="">— Сначала выберите услугу —</option>';
+            masterSelect.disabled = true;
+        }
+        
+        const timeSelect = document.getElementById('time');
+        if (timeSelect) {
+            timeSelect.innerHTML = '<option value="">— Сначала выберите дату —</option>';
+            timeSelect.disabled = true;
+        }
+        
         const notice = document.querySelector('.weekend-notice');
         if (notice) notice.remove();
     }
     
-    if (modalClose) {
-        modalClose.addEventListener('click', closeModal);
+    function closeModal() {
+        modal.classList.remove('modal-booking--active');
+        document.body.style.overflow = '';
+        resetForm();
     }
     
-    if (modalOverlay) {
-        modalOverlay.addEventListener('click', closeModal);
-    }
+    if (modalClose) modalClose.addEventListener('click', closeModal);
+    if (modalOverlay) modalOverlay.addEventListener('click', closeModal);
     
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && modal.classList.contains('modal-booking--active')) {
@@ -119,72 +150,73 @@ export function initBookingForm() {
     });
     
     initServiceMasterDependency();
-    initCalendar();
-    initTimeSlots();
     initPhoneMask();
     
     const bookingForm = document.getElementById('booking-form');
     if (bookingForm) {
         bookingForm.addEventListener('submit', handleFormSubmit);
-        console.log('Form submit handler attached');
     }
     
     attachBookingButtons();
 }
 
-// ==================== МАППИНГ УСЛУГ К МАСТЕРАМ ====================
-const mastersByService = {
-    // Тату
-    'tattoo-individual': ['Даниил Грачёв', 'Анастасия Шиндина', 'Юрий Манохин'],
-    'tattoo-catalog': ['Даниил Грачёв', 'Анастасия Шиндина', 'Юрий Манохин'],
-    'tattoo-cover': ['Юрий Манохин', 'Даниил Грачёв'],
-    // Пирсинг
-    'piercing-ear': ['Виктория Томс', 'Алексей Бобров'],
-    'piercing-nose': ['Виктория Томс', 'Алексей Бобров'],
-    'piercing-lip': ['Виктория Томс'],
-    'piercing-eyebrow': ['Виктория Томс'],
-    'piercing-tongue': ['Виктория Томс'],
-    'piercing-navel': ['Виктория Томс'],
-    'piercing-intimate': ['Виктория Томс'],
-    // Массаж
-    'massage-classic': ['Алексей Авакумов'],
-    'massage-sport': ['Алексей Авакумов'],
-    'massage-anticellulite': ['Алексей Авакумов'],
-    // Барбершоп
-    'barber-haircut-men': ['Алексей (барбер)', 'Даниил (барбер)', 'Виктория (барбер)'],
-    'barber-haircut-kids': ['Алексей (барбер)', 'Даниил (барбер)'],
-    'barber-beard-modeling': ['Алексей (барбер)', 'Даниил (барбер)'],
-    'barber-beard-care': ['Алексей (барбер)', 'Даниил (барбер)'],
-    'barber-shave-classic': ['Алексей (барбер)', 'Виктория (барбер)'],
-    'barber-shave-razor': ['Алексей (барбер)', 'Виктория (барбер)']
-};
-
-// ==================== ЗАВИСИМОСТЬ УСЛУГА → МАСТЕР ====================
+// ==================== ЗАВИСИМОСТЬ УСЛУГА → МАСТЕР (из mastersData) ====================
 function initServiceMasterDependency() {
     const serviceSelect = document.getElementById('service');
+    const masterGroup = document.getElementById('master-group');
     const masterSelect = document.getElementById('master');
     
     if (!serviceSelect || !masterSelect) return;
     
     serviceSelect.addEventListener('change', function() {
         const service = this.value;
-        const masters = mastersByService[service] || [];
+        
+        if (!service) {
+            masterGroup.style.display = 'none';
+            return;
+        }
+        
+        // Используем данные из mastersData.js
+        const masters = getMastersByService(service);
         
         masterSelect.innerHTML = '<option value="">— Выберите мастера —</option>';
         
         if (masters.length > 0) {
             masters.forEach(master => {
                 const option = document.createElement('option');
-                option.value = master;
-                option.textContent = master;
+                option.value = master.id;
+                // Показываем имя + звездочку для топ-мастеров
+                const star = master.isTop ? '⭐ ' : '';
+                const specialty = master.specialty ? ` (${master.specialty})` : '';
+                option.textContent = `${star}${master.name}${specialty}`;
                 masterSelect.appendChild(option);
             });
             masterSelect.disabled = false;
+            masterGroup.style.display = 'block';
+            masterSelect.removeEventListener('change', onMasterSelect);
+            masterSelect.addEventListener('change', onMasterSelect);
         } else {
             masterSelect.innerHTML = '<option value="">— Нет доступных мастеров —</option>';
             masterSelect.disabled = true;
+            masterGroup.style.display = 'block';
         }
     });
+}
+
+function onMasterSelect() {
+    const masterSelect = document.getElementById('master');
+    const datetimeGroup = document.getElementById('datetime-group');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    if (masterSelect.value) {
+        datetimeGroup.style.display = 'block';
+        initCalendar();
+        initTimeSlots();
+        submitBtn.style.display = 'block';
+    } else {
+        datetimeGroup.style.display = 'none';
+        submitBtn.style.display = 'none';
+    }
 }
 
 // ==================== КАЛЕНДАРЬ ====================
@@ -197,16 +229,43 @@ function initCalendar() {
         return;
     }
     
+    if (dateInput._flatpickr) {
+        dateInput._flatpickr.destroy();
+    }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     flatpickr(dateInput, {
         locale: 'ru',
         minDate: 'today',
         dateFormat: 'd.m.Y',
+        disable: [function(date) { return date < today; }],
+        onDayCreate: function(dObj, dStr, fp, dayElem) {
+            const dayDate = dayElem.dateObj;
+            if (dayDate < today) {
+                dayElem.style.color = '#666';
+                dayElem.style.opacity = '0.5';
+                dayElem.style.textDecoration = 'line-through';
+                dayElem.style.background = '#2a2a2a';
+                dayElem.style.cursor = 'not-allowed';
+            } else if (dayDate.toDateString() === today.toDateString()) {
+                dayElem.style.border = '2px solid #c9a227';
+                dayElem.style.color = '#c9a227';
+            } else if ((dayDate.getDay() === 0 || dayDate.getDay() === 6) && dayDate >= today) {
+                dayElem.style.color = '#dbb957';
+            } else {
+                dayElem.style.color = '#fff';
+                dayElem.style.opacity = '1';
+                dayElem.style.textDecoration = 'none';
+                dayElem.style.background = 'transparent';
+            }
+        },
         onChange: function(selectedDates, dateStr) {
             const timeSelect = document.getElementById('time');
             if (timeSelect && dateStr) {
                 timeSelect.disabled = false;
             }
-            
             if (selectedDates[0]) {
                 const dayOfWeek = selectedDates[0].getDay();
                 const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
@@ -218,7 +277,6 @@ function initCalendar() {
 
 function showWeekendNotice(show) {
     let notice = document.querySelector('.weekend-notice');
-    
     if (show) {
         if (!notice) {
             const dateField = document.getElementById('date');
@@ -243,8 +301,11 @@ function initTimeSlots() {
     const timeSelect = document.getElementById('time');
     if (!timeSelect) return;
     
-    const timeSlots = ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
+    const firstOption = timeSelect.querySelector('option[value=""]');
+    timeSelect.innerHTML = '';
+    if (firstOption) timeSelect.appendChild(firstOption);
     
+    const timeSlots = ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
     timeSlots.forEach(time => {
         const option = document.createElement('option');
         option.value = time;
@@ -260,7 +321,6 @@ function initPhoneMask() {
     
     phoneInput.addEventListener('input', function(e) {
         let value = e.target.value.replace(/\D/g, '');
-        
         if (value.length > 0) {
             if (value.length <= 1) {
                 value = '+7';
@@ -278,7 +338,7 @@ function initPhoneMask() {
     });
 }
 
-// ==================== ОТПРАВКА ФОРМЫ ====================
+// ==================== ОТПРАВКА ФОРМЫ (ТЕСТОВЫЙ РЕЖИМ) ====================
 async function handleFormSubmit(e) {
     e.preventDefault();
     
@@ -287,80 +347,118 @@ async function handleFormSubmit(e) {
     
     const name = formData.get('name');
     const phone = formData.get('phone');
-    const service = formData.get('service');
-    const master = formData.get('master');
+    const serviceCode = formData.get('service');
+    const masterId = formData.get('master');
     const date = formData.get('date');
     const time = formData.get('time');
+    const comment = formData.get('comment') || '';
     
-    if (!name || !phone || !service || !master || !date || !time) {
+    if (!name || !phone || !serviceCode || !masterId || !date || !time) {
         showNotification('Пожалуйста, заполните все обязательные поля', 'error');
         return;
     }
     
     const phoneRegex = /^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/;
     if (!phoneRegex.test(phone)) {
-        showNotification('Введите корректный номер телефона в формате +7 (XXX) XXX-XX-XX', 'error');
+        showNotification('Введите корректный номер телефона', 'error');
         return;
     }
+    
+    // Получаем данные мастера из MASTERS_DATA
+    const master = MASTERS_DATA[masterId];
+    const masterName = master ? master.name : masterId;
+    const masterSpecialty = master?.specialty || '';
+    const isTopMaster = master?.isTop || false;
+    
+    // Получаем название услуги из select
+    const serviceSelect = document.getElementById('service');
+    const serviceName = serviceSelect.options[serviceSelect.selectedIndex]?.text || serviceCode;
     
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.textContent = 'Отправка...';
     submitBtn.disabled = true;
     
-    try {
-        const response = await fetch('php/send-booking.php', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            form.reset();
-            
-            const masterSelect = document.getElementById('master');
-            const timeSelect = document.getElementById('time');
-            if (masterSelect) {
-                masterSelect.innerHTML = '<option value="">— Сначала выберите услугу —</option>';
-                masterSelect.disabled = true;
-            }
-            if (timeSelect) {
-                timeSelect.innerHTML = '<option value="">— Сначала выберите дату —</option>';
-                timeSelect.disabled = true;
-            }
-            
-            const notice = document.querySelector('.weekend-notice');
-            if (notice) notice.remove();
-            
-            showNotification('Спасибо! Мы свяжемся с вами в ближайшее время для подтверждения записи.', 'success');
-            
-            setTimeout(() => {
-                const modal = document.getElementById('modal-booking');
-                if (modal) {
-                    modal.classList.remove('modal-booking--active');
-                    document.body.style.overflow = '';
-                }
-            }, 2000);
-        } else {
-            showNotification(result.error || 'Ошибка при отправке. Пожалуйста, попробуйте позже.', 'error');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        showNotification('Ошибка соединения. Проверьте интернет или попробуйте позже.', 'error');
-    } finally {
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
+    // ТЕСТОВЫЙ РЕЖИМ: сохраняем в localStorage
+    const booking = {
+        id: Date.now(),
+        name,
+        phone,
+        service: serviceName,
+        master: masterName,
+        masterSpecialty,
+        isTopMaster,
+        date,
+        time,
+        comment,
+        createdAt: new Date().toISOString()
+    };
+    
+    const bookings = JSON.parse(localStorage.getItem('hohloma_bookings') || '[]');
+    bookings.push(booking);
+    localStorage.setItem('hohloma_bookings', JSON.stringify(bookings));
+    
+    // Выводим в консоль
+    console.log('📋 НОВАЯ ЗАПИСЬ:');
+    console.log('├─ Имя:', name);
+    console.log('├─ Телефон:', phone);
+    console.log('├─ Услуга:', serviceName);
+    console.log(`├─ Мастер: ${isTopMaster ? '⭐ ' : ''}${masterName}${masterSpecialty ? ` (${masterSpecialty})` : ''}`);
+    console.log('├─ Дата/время:', date, time);
+    console.log('└─ Комментарий:', comment || '—');
+    console.log(`📊 Всего записей: ${bookings.length}`);
+    
+    // Очищаем форму
+    form.reset();
+    
+    const masterSelect = document.getElementById('master');
+    const timeSelect = document.getElementById('time');
+    if (masterSelect) {
+        masterSelect.innerHTML = '<option value="">— Сначала выберите услугу —</option>';
+        masterSelect.disabled = true;
     }
+    if (timeSelect) {
+        timeSelect.innerHTML = '<option value="">— Сначала выберите дату —</option>';
+        timeSelect.disabled = true;
+    }
+    
+    const masterGroup = document.getElementById('master-group');
+    const datetimeGroup = document.getElementById('datetime-group');
+    const submitBtn2 = document.getElementById('submit-btn');
+    if (masterGroup) masterGroup.style.display = 'none';
+    if (datetimeGroup) datetimeGroup.style.display = 'none';
+    if (submitBtn2) submitBtn2.style.display = 'none';
+    
+    const notice = document.querySelector('.weekend-notice');
+    if (notice) notice.remove();
+    
+    showNotification('✅ Запись сохранена! Хорошего дня!', 'success');
+    
+    setTimeout(() => {
+        const modal = document.getElementById('modal-booking');
+        if (modal) {
+            modal.classList.remove('modal-booking--active');
+            document.body.style.overflow = '';
+        }
+    }, 2000);
+    
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
 }
 
-// ==================== УВЕДОМЛЕНИЯ ====================
 function showNotification(message, type = 'info') {
     const modal = document.getElementById('notification-modal');
     if (!modal) return;
     
     const modalMessage = modal.querySelector('.modal__message');
+    const modalIcon = modal.querySelector('.modal__icon');
+    
     if (modalMessage) modalMessage.textContent = message;
+    
+    if (modalIcon) {
+        modalIcon.className = `modal__icon modal__icon--${type}`;
+        modalIcon.textContent = type === 'success' ? '✓' : '✗';
+    }
     
     modal.classList.add('modal--active');
     
@@ -369,13 +467,8 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// ==================== КНОПКИ ЗАПИСИ ====================
 function attachBookingButtons() {
-    console.log('Attaching booking buttons...');
-    
     const allButtons = document.querySelectorAll('.team-card__book, [data-modal-open], .nav__link--primary, .hero__actions .btn--primary');
-    console.log('Found buttons:', allButtons.length);
-    
     allButtons.forEach(btn => {
         btn.removeEventListener('click', handleBookingClick);
         btn.addEventListener('click', handleBookingClick);
@@ -384,8 +477,6 @@ function attachBookingButtons() {
 
 function handleBookingClick(e) {
     e.preventDefault();
-    console.log('Booking button clicked');
-    
     if (window.openBookingModal) {
         window.openBookingModal();
     }

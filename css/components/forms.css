@@ -27,6 +27,7 @@
 .flatpickr-months {
     background: var(--color-black) !important;
     border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+    padding: 10px 0 !important;
 }
 
 .flatpickr-month {
@@ -51,18 +52,40 @@
     color: var(--color-gold) !important;
     font-weight: 600 !important;
     font-size: 0.9rem !important;
+    background: var(--color-dark) !important;
 }
 
-/* Дни месяца */
+/* Общий стиль для всех дней */
 .flatpickr-day {
     color: var(--color-white) !important;
     border-radius: 50% !important;
     transition: all 0.2s ease !important;
+    font-weight: 500 !important;
 }
 
-.flatpickr-day:hover {
+/* Доступные дни (будущие) */
+.flatpickr-day:not(.disabled):not(.prevMonthDay):not(.nextMonthDay) {
+    color: var(--color-white) !important;
+    background: transparent !important;
+}
+
+/* Доступные дни при наведении */
+.flatpickr-day:not(.disabled):not(.prevMonthDay):not(.nextMonthDay):hover {
     background: var(--color-gray) !important;
     border-color: var(--color-gold) !important;
+}
+
+/* ========== НЕДОСТУПНЫЕ ДНИ (ПРОШЕДШИЕ) ========== */
+.flatpickr-day.disabled,
+.flatpickr-day.disabled:hover,
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    color: #555 !important;          /* Серый цвет текста */
+    background: transparent !important;
+    border-color: transparent !important;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+    text-decoration: line-through !important;  /* Зачёркивание для наглядности */
 }
 
 /* Выбранный день */
@@ -72,11 +95,8 @@
     border-color: var(--color-gold) !important;
     color: var(--color-black) !important;
     font-weight: bold !important;
-}
-
-/* Выходные дни (суббота, воскресенье) */
-.flatpickr-day.weekend {
-    color: var(--color-gold-light) !important;
+    opacity: 1 !important;
+    text-decoration: none !important;
 }
 
 /* Текущий день */
@@ -90,14 +110,18 @@
     background: var(--color-gold) !important;
 }
 
-/* Заблокированные дни */
-.flatpickr-day.disabled,
-.flatpickr-day.disabled:hover {
-    color: var(--color-gray) !important;
-    background: transparent !important;
-    border-color: transparent !important;
+/* Выходные дни (доступные) */
+.flatpickr-day:not(.disabled):not(.prevMonthDay):not(.nextMonthDay).weekend {
+    color: var(--color-gold-light) !important;
 }
 
+/* Выходные дни (недоступные) */
+.flatpickr-day.disabled.weekend,
+.flatpickr-day.prevMonthDay.weekend,
+.flatpickr-day.nextMonthDay.weekend {
+    color: #555 !important;
+    opacity: 0.5 !important;
+}
 /* Контейнер выбора года/месяца */
 .numInputWrapper {
     color: var(--color-gold) !important;

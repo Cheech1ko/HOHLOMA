@@ -1,0 +1,129 @@
+.contacts {
+    padding: 80px 0;
+    background: var(--color-black);
+}
+
+.contacts__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    margin-top: 50px;
+}
+
+.contacts__info {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.contacts__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.contacts__icon {
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(201, 162, 39, 0.1);
+    border-radius: 12px;
+}
+
+.contacts__icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.contacts__text h4 {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    color: var(--color-gold);
+    font-family: var(--font-headers);
+}
+
+.contacts__text p {
+    color: var(--color-off-white);
+    line-height: 1.5;
+    font-size: 1rem;
+}
+
+.contacts__text a {
+    color: var(--color-off-white);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.contacts__text a:hover {
+    color: var(--color-gold);
+}
+
+.contacts__map {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.contacts__map iframe {
+    display: block;
+    transition: transform var(--transition-normal);
+}
+
+.contacts__map iframe:hover {
+    transform: scale(1.02);
+}
+
+/* Адаптив */
+@media (max-width: 1024px) {
+    .contacts__grid {
+        gap: 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .contacts {
+        padding: 60px 0;
+    }
+    
+    .contacts__grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+    
+    .contacts__item {
+        gap: 15px;
+    }
+    
+    .contacts__icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .contacts__icon svg {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .contacts__text h4 {
+        font-size: 1rem;
+    }
+    
+    .contacts__text p {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .contacts__item {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .contacts__icon {
+        margin-bottom: 10px;
+    }
+}

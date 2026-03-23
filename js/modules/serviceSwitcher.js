@@ -3,11 +3,7 @@ export function initServiceSwitcher() {
     
     const switcherBtns = document.querySelectorAll('.nav__link--switcher');
     const contents = document.querySelectorAll('.service-content');
-    
-    if (!switcherBtns.length || !contents.length) {
-        console.warn('Service switcher elements not found');
-        return;
-    }
+    const allowedServices = ['tattoo', 'barber', 'piercing', 'massage'];
     
     function switchService(serviceName, addToHistory = true) {
         console.log('Switching to:', serviceName);
@@ -27,27 +23,26 @@ export function initServiceSwitcher() {
                 btn.classList.add('nav__link--active');
             }
         });
-
+        
         if (addToHistory) {
             const newUrl = `${window.location.pathname}?service=${serviceName}`;
             window.history.pushState({ service: serviceName }, '', newUrl);
         }
         
         localStorage.setItem('preferredService', serviceName);
-
-        window.dispatchEvent(new CustomEvent('serviceChanged', { detail: { service: serviceName}
-        }));
+        
+        window.dispatchEvent(new CustomEvent('serviceChanged', { detail: { service: serviceName } }));
     }
-
+    
     function getServiceFromUrl() {
         const urlParams = new URLSearchParams(window.location.search);
         const service = urlParams.get('service');
-        if (service === 'tattoo' || service === 'barber') {
+        if (allowedServices.includes(service)) {
             return service;
         }
         return null;
     }
-
+    
     switcherBtns.forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -55,31 +50,24 @@ export function initServiceSwitcher() {
             switchService(service, true);
         });
     });
-
+    
     window.addEventListener('popstate', function(event) {
         const service = event.state?.service || getServiceFromUrl();
-        if (service) {
-            switchService(service, false); 
+        if (service && allowedServices.includes(service)) {
+            switchService(service, false);
         } else {
             switchService('tattoo', false);
         }
-    })
-
+    });
+    
     let initialService = getServiceFromUrl();
     if (!initialService) {
         initialService = localStorage.getItem('preferredService');
     }
-
-    if (initialService && (initialService === 'tattoo' || initialService === 'barber')) {
+    
+    if (initialService && allowedServices.includes(initialService)) {
         switchService(initialService, false);
     } else {
         switchService('tattoo', false);
-    }
-    
-    const savedService = localStorage.getItem('preferredService');
-    if (savedService && (savedService === 'tattoo' || savedService === 'barber')) {
-        switchService(savedService);
-    } else {
-        switchService('barber');
     }
 }

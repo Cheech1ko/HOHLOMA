@@ -5,33 +5,30 @@
     width: 100%;
     background: rgba(10, 10, 10, 0.95);
     backdrop-filter: blur(10px);
-    z-index: 1000; /* Должен быть выше, чем у hero */
+    border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+    z-index: 1000;
 }
 
 .header__container {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    height: var(--header-height);
-    gap: 2rem;
+    height: 70px;
+    padding: 0 20px;
 }
 
 
 .header__left {
-    display: flex;
-    justify-content: flex-start;
+    display: none;
 }
-
-
-.header__center {
-    display: flex;
-    justify-content: center;
-}
-
 
 .header__right {
-    display: flex;
-    justify-content: flex-end;
+    display: none;
+}
+
+.header__center {
+    grid-column: 1 / -1;
+    justify-self: center;
 }
 
 
@@ -45,10 +42,8 @@
 }
 
 .logo__img {
-    height: 100px;
-    width: auto;
-    max-width: 200px;
-    object-fit: contain;
+    height: 80px;
+    width: 100px;
 }
 
 
@@ -108,7 +103,7 @@
     border: none;
     cursor: pointer;
     padding: 0;
-    z-index: 10;
+    z-index: 1001;
 }
 
 .burger span {
@@ -230,12 +225,40 @@
 }
 
 /* Адаптив */
-@media (max-width: 1024px) {
+@media (min-width: 1025px) {
+    .nav__list {
+        gap: 0.5rem;
+    }
+    
     .nav__link {
         padding: 0.75rem 1rem;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
     }
 }
+
+@media (max-width: 1024px) and (min-width: 769px) {
+    .nav__list {
+        gap: 0.25rem;
+        flex-wrap: wrap;
+        padding: 0.5rem;
+    }
+    
+    .nav__link {
+        padding: 0.5rem 0.7rem;
+        font-size: 0.8rem;
+    }
+    
+    .nav__link--primary {
+        margin-left: 0.25rem;
+        padding: 0.5rem 0.8rem;
+    }
+    
+    .nav__link--switcher {
+        padding: 0.5rem 0.7rem;
+        font-size: 0.75rem;
+    }
+}
+
 
 @media (max-width: 768px) {
     .nav {
@@ -357,11 +380,11 @@
 
 @media (max-width: 480px) {
     .logo__img {
-        height: 40px;
+        height: 80px;
     }
     
     .nav__link {
         padding: 0.8rem;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
     }
 }

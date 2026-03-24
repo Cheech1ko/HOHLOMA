@@ -223,3 +223,13 @@ img {
 .flatpickr-day.prevMonthDay.weekend {
     color: #555555 !important;
 }
+
+:root {
+    --header-height: 70px;
+}
+
+@media (min-width: 768px) {
+    :root {
+        --header-height: 80px;
+    }
+}

@@ -99,7 +99,26 @@
         gap: 30px;
     }
     
+    /* Логотип по центру на мобилках */
+    .footer__logo-img {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        height: 70px;
+        width: auto;
+    }
+    
+    .footer__desc {
+        max-width: 280px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
     .footer__social {
         justify-content: center;
+    }
+    
+    .footer__list {
+        padding: 0;
     }
 }

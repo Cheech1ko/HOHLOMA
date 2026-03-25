@@ -6,23 +6,9 @@ import { initForms } from './modules/forms.js';
 import { initAnimations } from './modules/animations.js';
 import { initBookingForm } from './modules/bookingForm.js';
 
-window.addEventListener('load', function() {
-    console.log('Page fully loaded');
-
-    const preloader = document.getElementById('preloader');
-    if (preloader) {
-        setTimeout(() => {
-            preloader.classList.add('preloader--hidden');
-            setTimeout(() => {
-                preloader.style.display = 'none';
-            }, 500);
-        }, 1000);
-    }
-    initApp();
-});
-
-function initApp() {
-    console.log(' Initializing HOHLOMA app...');
+// Ждём полной загрузки DOM
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 DOM ready, initializing modules...');
     
     try {
         initServiceSwitcher();
@@ -32,36 +18,13 @@ function initApp() {
         initForms();
         initBookingForm();
         
-        setTimeout(() => {
+        // Анимации запускаем после загрузки всех ресурсов
+        window.addEventListener('load', () => {
             initAnimations();
-        }, 100);
+        });
         
-        console.log('✅ All modules initialized successfully');
+        console.log('✅ All modules initialized');
     } catch (error) {
         console.error('❌ Error initializing modules:', error);
     }
-}
-
-window.showNotification = function(message, type = 'info') {
-    const modal = document.getElementById('notification-modal');
-    
-    if (!modal) return;
-
-    const modalMessage = modal.querySelector('.modal__message');
-    const modalIcon = modal.querySelector('.modal__icon');
-
-    if (modalMessage) {
-        modalMessage.textContent = message;
-    }
-
-    if (modalIcon) {
-        modalIcon.className = `modal__icon modal__icon--${type}`;
-        modalIcon.textContent = type === 'success' ? '✓' : '✗';
-    }
-
-    modal.classList.add('modal--active');
-
-    setTimeout(() => {
-        modal.classList.remove('modal--active');
-    }, 5000);
-};
+});

@@ -1,396 +1,408 @@
 import { getMastersByService, MASTERS_DATA } from './mastersData.js';
 
+let currentStep = 1;
+let selectedServiceId = null;
+let selectedMasterId = null;
+let currentContext = { presetMasterId: null, presetServiceId: null, source: null };
+
+const mastersByService = {
+    'tattoo-individual': ['daniil-tattoo', 'anastasia-tattoo', 'yuri-tattoo'],
+    'tattoo-catalog': ['daniil-tattoo', 'anastasia-tattoo', 'yuri-tattoo'],
+    'tattoo-cover': ['yuri-tattoo', 'daniil-tattoo'],
+    'piercing-ear': ['victoria-piercing', 'alexey-piercing'],
+    'piercing-nose': ['victoria-piercing', 'alexey-piercing'],
+    'piercing-lip': ['victoria-piercing'],
+    'piercing-eyebrow': ['victoria-piercing'],
+    'piercing-tongue': ['victoria-piercing'],
+    'piercing-navel': ['victoria-piercing'],
+    'piercing-intimate': ['victoria-piercing'],
+    'massage-classic': ['alexey-massage'],
+    'massage-sport': ['alexey-massage'],
+    'massage-anticellulite': ['alexey-massage'],
+    'barber-haircut-men': ['vladimir-barber', 'kirill-barber', 'evgeniy-barber', 'maxim-barber', 'arianna-barber'],
+    'barber-haircut-kids': ['vladimir-barber', 'kirill-barber', 'evgeniy-barber'],
+    'barber-beard-modeling': ['vladimir-barber', 'kirill-barber', 'evgeniy-barber'],
+    'barber-beard-care': ['vladimir-barber', 'kirill-barber', 'evgeniy-barber'],
+    'barber-shave-classic': ['vladimir-barber', 'kirill-barber', 'arianna-barber'],
+    'barber-shave-razor': ['vladimir-barber', 'kirill-barber', 'arianna-barber']
+};
+
 export function initBookingForm() {
-    console.log('Initializing booking form...');
-    
     const modal = document.getElementById('modal-booking');
     const modalClose = document.getElementById('modal-booking-close');
     const modalOverlay = modal?.querySelector('.modal-booking__overlay');
     const modalBody = document.querySelector('.modal-booking__body');
     
-    if (!modal) {
-        console.warn('Booking modal not found');
-        return;
-    }
+    if (!modal) return;
     
-    // ВСТАВЛЯЕМ ФОРМУ
     if (modalBody) {
         modalBody.innerHTML = `
-            <form id="booking-form" class="booking-form">
-                <!-- ШАГ 1: УСЛУГА -->
-                <div class="form-group">
-                    <label class="form-label">Услуга *</label>
-                    <select id="service" name="service" class="form-select" required>
-                        <option value="">— Выберите услугу —</option>
-                        <option value="tattoo-individual">Татуировка (индивидуальный эскиз)</option>
-                        <option value="tattoo-catalog">Татуировка (из каталога)</option>
-                        <option value="tattoo-cover">Перекрытие/исправление тату</option>
-                        <option value="piercing-ear">Пирсинг уха</option>
-                        <option value="piercing-nose">Пирсинг носа</option>
-                        <option value="piercing-lip">Пирсинг губы</option>
-                        <option value="piercing-eyebrow">Пирсинг брови</option>
-                        <option value="piercing-tongue">Пирсинг языка</option>
-                        <option value="piercing-navel">Пирсинг пупка</option>
-                        <option value="piercing-intimate">Интимный пирсинг</option>
-                        <option value="massage-classic">Классический массаж</option>
-                        <option value="massage-sport">Спортивный массаж</option>
-                        <option value="massage-anticellulite">Антицеллюлитный массаж</option>
-                        <option value="barber-haircut-men">Мужская стрижка</option>
-                        <option value="barber-haircut-kids">Детская стрижка</option>
-                        <option value="barber-beard-modeling">Моделирование бороды</option>
-                        <option value="barber-beard-care">Уход за бородой</option>
-                        <option value="barber-shave-classic">Классическое бритьё</option>
-                        <option value="barber-shave-razor">Бритьё опасной бритвой</option>
-                    </select>
-                </div>
-                
-                <!-- ШАГ 2: МАСТЕР (появляется после выбора услуги) -->
-                <div class="form-group" id="master-group" style="display: none;">
-                    <label class="form-label">Мастер *</label>
-                    <select id="master" name="master" class="form-select" required disabled>
-                        <option value="">— Сначала выберите услугу —</option>
-                    </select>
-                </div>
-                
-                <!-- ШАГ 3: ДАТА И ВРЕМЯ (появляются после выбора мастера) -->
-                <div id="datetime-group" style="display: none;">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Дата *</label>
-                            <input type="text" id="date" name="date" class="form-input" placeholder="ДД.ММ.ГГГГ" required readonly>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Время *</label>
-                            <select id="time" name="time" class="form-select" required disabled>
-                                <option value="">— Сначала выберите дату —</option>
-                            </select>
-                        </div>
+            <div class="booking-steps">
+                <div class="booking-steps__nav">
+                    <div class="booking-steps__step" data-step="1">
+                        <span class="booking-steps__number">1</span>
+                        <span class="booking-steps__label">Услуги</span>
+                    </div>
+                    <div class="booking-steps__step" data-step="2">
+                        <span class="booking-steps__number">2</span>
+                        <span class="booking-steps__label">Мастер</span>
+                    </div>
+                    <div class="booking-steps__step" data-step="3">
+                        <span class="booking-steps__number">3</span>
+                        <span class="booking-steps__label">Время</span>
+                    </div>
+                    <div class="booking-steps__step" data-step="4">
+                        <span class="booking-steps__number">4</span>
+                        <span class="booking-steps__label">Данные</span>
                     </div>
                 </div>
                 
-                <!-- КОНТАКТНЫЕ ДАННЫЕ (всегда видны) -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Ваше имя *</label>
-                        <input type="text" id="name" name="name" class="form-input" placeholder="Имя" required>
+                <form id="booking-form">
+                    <div class="booking-step" data-step="1">
+                        <h3 class="booking-step__title">Выберите услугу</h3>
+                        <div class="booking-services__grid" id="services-grid"></div>
+                        <div class="booking-step__actions">
+                            <button type="button" class="btn btn--primary btn-next" data-next="2">Далее</button>
+                        </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label class="form-label">Телефон *</label>
-                        <input type="tel" id="phone" name="phone" class="form-input" placeholder="+7 (___) ___-__-__" required>
+                    <div class="booking-step" data-step="2" style="display: none;">
+                        <h3 class="booking-step__title">Выберите мастера</h3>
+                        <div class="booking-masters__grid" id="masters-grid"></div>
+                        <div class="booking-step__actions">
+                            <button type="button" class="btn btn--outline btn-prev" data-prev="1">Назад</button>
+                            <button type="button" class="btn btn--primary btn-next" data-next="3">Далее</button>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Комментарий (опционально)</label>
-                    <textarea name="comment" class="form-textarea" rows="3" placeholder="Дополнительная информация..."></textarea>
-                </div>
-                
-                <div class="form-group form-group--policy">
-                    <input type="checkbox" id="policy" name="policy" required checked>
-                    <label for="policy">Я согласен на обработку персональных данных</label>
-                </div>
-                
-                <button type="submit" class="btn btn--primary btn--large btn--full" id="submit-btn" style="display: none;">Записаться</button>
-            </form>
+                    
+                    <div class="booking-step" data-step="3" style="display: none;">
+                        <h3 class="booking-step__title">Выберите дату и время</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Дата *</label>
+                                <input type="text" id="date" name="date" class="form-input" placeholder="ДД.ММ.ГГГГ" required readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Время *</label>
+                                <select id="time" name="time" class="form-select" required disabled>
+                                    <option value="">— Сначала выберите дату —</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="booking-step__actions">
+                            <button type="button" class="btn btn--outline btn-prev" data-prev="2">Назад</button>
+                            <button type="button" class="btn btn--primary btn-next" data-next="4">Далее</button>
+                        </div>
+                    </div>
+                    
+                    <div class="booking-step" data-step="4" style="display: none;">
+                        <h3 class="booking-step__title">Ваши данные</h3>
+                        <div class="booking-summary" id="booking-summary"></div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Ваше имя *</label>
+                                <input type="text" id="name" name="name" class="form-input" placeholder="Имя" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Телефон *</label>
+                                <input type="tel" id="phone" name="phone" class="form-input" placeholder="+7 (___) ___-__-__" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Комментарий</label>
+                            <textarea name="comment" class="form-textarea" rows="3" placeholder="Дополнительная информация..."></textarea>
+                        </div>
+                        <div class="form-group form-group--policy">
+                            <input type="checkbox" id="policy" name="policy" required checked>
+                            <label for="policy">Я согласен на обработку персональных данных</label>
+                        </div>
+                        <div class="booking-step__actions">
+                            <button type="button" class="btn btn--outline btn-prev" data-prev="3">Назад</button>
+                            <button type="submit" class="btn btn--primary">Записаться</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         `;
-        console.log('Form inserted into modal');
     }
     
-    // Функция открытия модалки
-    window.openBookingModal = function() {
-        console.log('Opening modal...');
-        modal.classList.add('modal-booking--active');
-        document.body.style.overflow = 'hidden';
-        resetForm();
-    };
-    
-    function resetForm() {
-        const form = document.getElementById('booking-form');
-        if (form) form.reset();
-        
-        const masterGroup = document.getElementById('master-group');
-        const datetimeGroup = document.getElementById('datetime-group');
-        const submitBtn = document.getElementById('submit-btn');
-        
-        if (masterGroup) masterGroup.style.display = 'none';
-        if (datetimeGroup) datetimeGroup.style.display = 'none';
-        if (submitBtn) submitBtn.style.display = 'none';
-        
-        const masterSelect = document.getElementById('master');
-        if (masterSelect) {
-            masterSelect.innerHTML = '<option value="">— Сначала выберите услугу —</option>';
-            masterSelect.disabled = true;
-        }
-        
-        const timeSelect = document.getElementById('time');
-        if (timeSelect) {
-            timeSelect.innerHTML = '<option value="">— Сначала выберите дату —</option>';
-            timeSelect.disabled = true;
-        }
-        
-        const notice = document.querySelector('.weekend-notice');
-        if (notice) notice.remove();
-    }
-    
-    function closeModal() {
-        modal.classList.remove('modal-booking--active');
-        document.body.style.overflow = '';
-        resetForm();
-    }
-    
-    if (modalClose) modalClose.addEventListener('click', closeModal);
-    if (modalOverlay) modalOverlay.addEventListener('click', closeModal);
-    
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && modal.classList.contains('modal-booking--active')) {
-            closeModal();
-        }
-    });
-    
-    initServiceMasterDependency();
+    initServicesGrid();
+    initStepNavigation();
     initPhoneMask();
     
     const bookingForm = document.getElementById('booking-form');
-    if (bookingForm) {
-        bookingForm.addEventListener('submit', handleFormSubmit);
-    }
+    if (bookingForm) bookingForm.addEventListener('submit', handleFormSubmit);
     
     attachBookingButtons();
-}
-
-// ==================== ЗАВИСИМОСТЬ УСЛУГА → МАСТЕР (из mastersData) ====================
-function initServiceMasterDependency() {
-    const serviceSelect = document.getElementById('service');
-    const masterGroup = document.getElementById('master-group');
-    const masterSelect = document.getElementById('master');
     
-    if (!serviceSelect || !masterSelect) return;
-    
-    serviceSelect.addEventListener('change', function() {
-        const service = this.value;
+    window.openBookingModal = function(context = {}) {
+        currentContext = {
+            presetMasterId: context.masterId || null,
+            presetServiceId: context.serviceId || null,
+            source: context.source || null
+        };
         
-        if (!service) {
-            masterGroup.style.display = 'none';
-            return;
+        modal.classList.add('modal-booking--active');
+        document.body.style.overflow = 'hidden';
+        resetForm();
+        
+        if (currentContext.presetMasterId) {
+            setTimeout(() => applyPresetContext(), 100);
         }
-        
-        // Используем данные из mastersData.js
-        const masters = getMastersByService(service);
-        
-        masterSelect.innerHTML = '<option value="">— Выберите мастера —</option>';
-        
-        if (masters.length > 0) {
-            masters.forEach(master => {
-                const option = document.createElement('option');
-                option.value = master.id;
-                // Показываем имя + звездочку для топ-мастеров
-                const star = master.isTop ? '⭐ ' : '';
-                const specialty = master.specialty ? ` (${master.specialty})` : '';
-                option.textContent = `${star}${master.name}${specialty}`;
-                masterSelect.appendChild(option);
-            });
-            masterSelect.disabled = false;
-            masterGroup.style.display = 'block';
-            masterSelect.removeEventListener('change', onMasterSelect);
-            masterSelect.addEventListener('change', onMasterSelect);
-        } else {
-            masterSelect.innerHTML = '<option value="">— Нет доступных мастеров —</option>';
-            masterSelect.disabled = true;
-            masterGroup.style.display = 'block';
+    };
+    
+    if (modalClose) modalClose.addEventListener('click', () => {
+        modal.classList.remove('modal-booking--active');
+        document.body.style.overflow = '';
+        resetForm();
+    });
+    
+    if (modalOverlay) modalOverlay.addEventListener('click', () => {
+        modal.classList.remove('modal-booking--active');
+        document.body.style.overflow = '';
+        resetForm();
+    });
+    
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('modal-booking--active')) {
+            modal.classList.remove('modal-booking--active');
+            document.body.style.overflow = '';
+            resetForm();
         }
     });
 }
 
-function onMasterSelect() {
-    const masterSelect = document.getElementById('master');
-    const datetimeGroup = document.getElementById('datetime-group');
-    const submitBtn = document.getElementById('submit-btn');
+function initServicesGrid() {
+    const servicesGrid = document.getElementById('services-grid');
+    if (!servicesGrid) return;
     
-    if (masterSelect.value) {
-        datetimeGroup.style.display = 'block';
-        initCalendar();
-        initTimeSlots();
-        submitBtn.style.display = 'block';
-    } else {
-        datetimeGroup.style.display = 'none';
-        submitBtn.style.display = 'none';
-    }
+    const services = [
+        { id: 'tattoo-individual', name: 'Татуировка (индивидуальный эскиз)', category: 'tattoo', price: 'от 4 000₽', time: '3 часа' },
+        { id: 'tattoo-catalog', name: 'Татуировка (из каталога)', category: 'tattoo', price: 'от 4 000₽', time: '2 часа' },
+        { id: 'tattoo-cover', name: 'Перекрытие/исправление тату', category: 'tattoo', price: 'от 8 000₽', time: '3 часа' },
+        { id: 'piercing-ear', name: 'Пирсинг уха', category: 'piercing', price: 'от 1 000₽', time: '30 мин' },
+        { id: 'piercing-nose', name: 'Пирсинг носа', category: 'piercing', price: 'от 1 500₽', time: '30 мин' },
+        { id: 'piercing-lip', name: 'Пирсинг губы', category: 'piercing', price: 'от 1 500₽', time: '30 мин' },
+        { id: 'piercing-navel', name: 'Пирсинг пупка', category: 'piercing', price: 'от 2 000₽', time: '30 мин' },
+        { id: 'massage-classic', name: 'Классический массаж', category: 'massage', price: '2 000₽', time: '60 мин' },
+        { id: 'massage-sport', name: 'Спортивный массаж', category: 'massage', price: '2 500₽', time: '60 мин' },
+        { id: 'barber-haircut-men', name: 'Мужская стрижка', category: 'barber', price: 'от 1 400₽', time: '1 час' },
+        { id: 'barber-haircut-kids', name: 'Детская стрижка', category: 'barber', price: 'от 1 100₽', time: '45 мин' },
+        { id: 'barber-beard-modeling', name: 'Моделирование бороды', category: 'barber', price: 'от 900₽', time: '30 мин' },
+        { id: 'barber-shave-classic', name: 'Классическое бритьё', category: 'barber', price: 'от 1 100₽', time: '30 мин' }
+    ];
+    
+    servicesGrid.innerHTML = services.map(s => `
+        <div class="booking-service" data-service-id="${s.id}">
+            <div class="booking-service__info">
+                <h4 class="booking-service__name">${s.name}</h4>
+                <div class="booking-service__meta">
+                    <span class="booking-service__price">${s.price}</span>
+                    <span class="booking-service__time">⏱ ${s.time}</span>
+                </div>
+            </div>
+            <div class="booking-service__select"><span class="booking-service__radio"></span></div>
+        </div>
+    `).join('');
+    
+    document.querySelectorAll('.booking-service').forEach(el => {
+        el.addEventListener('click', () => {
+            document.querySelectorAll('.booking-service').forEach(s => s.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedServiceId = el.dataset.serviceId;
+        });
+    });
 }
 
-// ==================== КАЛЕНДАРЬ ====================
+function loadMastersForService(serviceId) {
+    const mastersGrid = document.getElementById('masters-grid');
+    if (!mastersGrid) return;
+    
+    const masterIds = mastersByService[serviceId] || [];
+    const masters = masterIds.map(id => MASTERS_DATA[id]).filter(m => m);
+    
+    mastersGrid.innerHTML = masters.map(master => `
+        <div class="booking-master" data-master-id="${master.id}">
+            <div class="booking-master__avatar">
+                <img src="${master.image || 'assets/images/placeholder.jpg'}" alt="${master.name}">
+            </div>
+            <div class="booking-master__info">
+                <h4 class="booking-master__name">${master.name}</h4>
+                <p class="booking-master__specialty">${master.specialty || 'мастер'}</p>
+                <div class="booking-master__rating">
+                    <span class="booking-master__stars">★★★★★</span>
+                    <span class="booking-master__reviews">5,0</span>
+                </div>
+            </div>
+            <div class="booking-master__select"><span class="booking-master__radio"></span></div>
+        </div>
+    `).join('');
+    
+    document.querySelectorAll('.booking-master').forEach(el => {
+        el.addEventListener('click', () => {
+            document.querySelectorAll('.booking-master').forEach(m => m.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedMasterId = el.dataset.masterId;
+        });
+    });
+}
+
+function initStepNavigation() {
+    const stepContents = document.querySelectorAll('.booking-step');
+    
+    function showStep(stepNumber) {
+        stepContents.forEach(content => {
+            content.style.display = content.dataset.step == stepNumber ? 'block' : 'none';
+        });
+        
+        document.querySelectorAll('.booking-steps__step').forEach(step => {
+            const stepNum = parseInt(step.dataset.step);
+            step.classList.remove('active', 'completed');
+            if (stepNum < stepNumber) step.classList.add('completed');
+            if (stepNum === stepNumber) step.classList.add('active');
+        });
+        
+        currentStep = stepNumber;
+        
+        if (stepNumber === 2 && selectedServiceId) loadMastersForService(selectedServiceId);
+        if (stepNumber === 3) { initCalendar(); initTimeSlots(); }
+        if (stepNumber === 4) updateBookingSummary();
+    }
+    
+    document.querySelectorAll('.btn-next').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const nextStep = parseInt(btn.dataset.next);
+            if (currentStep === 1 && !selectedServiceId) { showNotification('Выберите услугу', 'error'); return; }
+            if (currentStep === 2 && !selectedMasterId) { showNotification('Выберите мастера', 'error'); return; }
+            if (currentStep === 3) {
+                const date = document.getElementById('date')?.value;
+                const time = document.getElementById('time')?.value;
+                if (!date || !time) { showNotification('Выберите дату и время', 'error'); return; }
+            }
+            showStep(nextStep);
+        });
+    });
+    
+    document.querySelectorAll('.btn-prev').forEach(btn => {
+        btn.addEventListener('click', () => showStep(parseInt(btn.dataset.prev)));
+    });
+    
+    showStep(1);
+}
+
+function updateBookingSummary() {
+    const summary = document.getElementById('booking-summary');
+    if (!summary) return;
+    
+    const serviceEl = document.querySelector(`.booking-service[data-service-id="${selectedServiceId}"]`);
+    const serviceName = serviceEl?.querySelector('.booking-service__name')?.textContent || '—';
+    const servicePrice = serviceEl?.querySelector('.booking-service__price')?.textContent || '—';
+    const master = MASTERS_DATA[selectedMasterId];
+    const masterName = master?.name || '—';
+    const date = document.getElementById('date')?.value || '—';
+    const time = document.getElementById('time')?.value || '—';
+    
+    summary.innerHTML = `
+        <div class="booking-summary__item"><span class="booking-summary__label">Услуга:</span><span class="booking-summary__value">${serviceName} (${servicePrice})</span></div>
+        <div class="booking-summary__item"><span class="booking-summary__label">Мастер:</span><span class="booking-summary__value">${masterName}</span></div>
+        <div class="booking-summary__item"><span class="booking-summary__label">Дата и время:</span><span class="booking-summary__value">${date} ${time}</span></div>
+    `;
+}
+
 function initCalendar() {
     const dateInput = document.getElementById('date');
-    if (!dateInput) return;
+    if (!dateInput || typeof flatpickr === 'undefined') return;
+    if (dateInput._flatpickr) dateInput._flatpickr.destroy();
     
-    if (typeof flatpickr === 'undefined') {
-        console.warn('Flatpickr not loaded');
-        return;
-    }
-    
-    if (dateInput._flatpickr) {
-        dateInput._flatpickr.destroy();
-    }
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
     
     flatpickr(dateInput, {
-        locale: 'ru',
-        minDate: 'today',
-        dateFormat: 'd.m.Y',
-        disable: [function(date) { return date < today; }],
-        onDayCreate: function(dObj, dStr, fp, dayElem) {
+        locale: 'ru', minDate: 'today', dateFormat: 'd.m.Y',
+        disable: [date => date < today],
+        onDayCreate: (dObj, dStr, fp, dayElem) => {
             const dayDate = dayElem.dateObj;
-            if (dayDate < today) {
-                dayElem.style.color = '#666';
-                dayElem.style.opacity = '0.5';
-                dayElem.style.textDecoration = 'line-through';
-                dayElem.style.background = '#2a2a2a';
-                dayElem.style.cursor = 'not-allowed';
-            } else if (dayDate.toDateString() === today.toDateString()) {
-                dayElem.style.border = '2px solid #c9a227';
-                dayElem.style.color = '#c9a227';
-            } else if ((dayDate.getDay() === 0 || dayDate.getDay() === 6) && dayDate >= today) {
-                dayElem.style.color = '#dbb957';
-            } else {
-                dayElem.style.color = '#fff';
-                dayElem.style.opacity = '1';
-                dayElem.style.textDecoration = 'none';
-                dayElem.style.background = 'transparent';
-            }
+            if (dayDate < today) { dayElem.style.cssText = 'color:#666;opacity:0.5;text-decoration:line-through;background:#2a2a2a'; }
+            else if (dayDate.toDateString() === today.toDateString()) dayElem.style.border = '2px solid #c9a227';
+            else if (dayDate.getDay() === 0 || dayDate.getDay() === 6) dayElem.style.color = '#dbb957';
         },
-        onChange: function(selectedDates, dateStr) {
+        onChange: (dates, dateStr) => {
             const timeSelect = document.getElementById('time');
-            if (timeSelect && dateStr) {
-                timeSelect.disabled = false;
-            }
-            if (selectedDates[0]) {
-                const dayOfWeek = selectedDates[0].getDay();
-                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-                showWeekendNotice(isWeekend);
-            }
+            if (timeSelect && dateStr) timeSelect.disabled = false;
+            showWeekendNotice(dates[0] && (dates[0].getDay() === 0 || dates[0].getDay() === 6));
         }
+    });
+}
+
+function initTimeSlots() {
+    const timeSelect = document.getElementById('time');
+    if (!timeSelect) return;
+    timeSelect.innerHTML = '<option value="">— Выберите время —</option>';
+    ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'].forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        timeSelect.appendChild(opt);
     });
 }
 
 function showWeekendNotice(show) {
     let notice = document.querySelector('.weekend-notice');
-    if (show) {
-        if (!notice) {
-            const dateField = document.getElementById('date');
-            if (dateField && dateField.parentNode) {
-                notice = document.createElement('div');
-                notice.className = 'weekend-notice';
-                notice.innerHTML = `
-                    <span class="weekend-notice__icon">💰</span>
-                    <span class="weekend-notice__text">В выходные и праздничные дни наценка +200₽</span>
-                `;
-                dateField.parentNode.appendChild(notice);
-            }
+    if (show && !notice) {
+        const dateField = document.getElementById('date');
+        if (dateField?.parentNode) {
+            notice = document.createElement('div');
+            notice.className = 'weekend-notice';
+            notice.innerHTML = '💰 В выходные и праздничные дни наценка +200₽';
+            dateField.parentNode.appendChild(notice);
         }
-        if (notice) notice.style.display = 'flex';
-    } else {
-        if (notice) notice.style.display = 'none';
     }
+    if (notice) notice.style.display = show ? 'block' : 'none';
 }
 
-// ==================== ВРЕМЕННЫЕ СЛОТЫ ====================
-function initTimeSlots() {
-    const timeSelect = document.getElementById('time');
-    if (!timeSelect) return;
-    
-    const firstOption = timeSelect.querySelector('option[value=""]');
-    timeSelect.innerHTML = '';
-    if (firstOption) timeSelect.appendChild(firstOption);
-    
-    const timeSlots = ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
-    timeSlots.forEach(time => {
-        const option = document.createElement('option');
-        option.value = time;
-        option.textContent = time;
-        timeSelect.appendChild(option);
-    });
-}
-
-// ==================== МАСКА ТЕЛЕФОНА ====================
 function initPhoneMask() {
     const phoneInput = document.getElementById('phone');
     if (!phoneInput) return;
-    
-    phoneInput.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length > 0) {
-            if (value.length <= 1) {
-                value = '+7';
-            } else if (value.length <= 4) {
-                value = '+7 (' + value.substring(1, 4);
-            } else if (value.length <= 7) {
-                value = '+7 (' + value.substring(1, 4) + ') ' + value.substring(4, 7);
-            } else if (value.length <= 9) {
-                value = '+7 (' + value.substring(1, 4) + ') ' + value.substring(4, 7) + '-' + value.substring(7, 9);
-            } else {
-                value = '+7 (' + value.substring(1, 4) + ') ' + value.substring(4, 7) + '-' + value.substring(7, 9) + '-' + value.substring(9, 11);
-            }
-            e.target.value = value;
+    phoneInput.addEventListener('input', e => {
+        let v = e.target.value.replace(/\D/g, '');
+        if (v.length > 0) {
+            if (v.length <= 1) v = '+7';
+            else if (v.length <= 4) v = '+7 (' + v.substring(1, 4);
+            else if (v.length <= 7) v = '+7 (' + v.substring(1, 4) + ') ' + v.substring(4, 7);
+            else if (v.length <= 9) v = '+7 (' + v.substring(1, 4) + ') ' + v.substring(4, 7) + '-' + v.substring(7, 9);
+            else v = '+7 (' + v.substring(1, 4) + ') ' + v.substring(4, 7) + '-' + v.substring(7, 9) + '-' + v.substring(9, 11);
+            e.target.value = v;
         }
     });
 }
 
-// ==================== ОТПРАВКА ФОРМЫ (ТЕСТОВЫЙ РЕЖИМ) ====================
 async function handleFormSubmit(e) {
     e.preventDefault();
+    const name = document.getElementById('name')?.value;
+    const phone = document.getElementById('phone')?.value;
+    const date = document.getElementById('date')?.value;
+    const time = document.getElementById('time')?.value;
+    const comment = document.querySelector('[name="comment"]')?.value || '';
     
-    const form = e.target;
-    const formData = new FormData(form);
-    
-    const name = formData.get('name');
-    const phone = formData.get('phone');
-    const serviceCode = formData.get('service');
-    const masterId = formData.get('master');
-    const date = formData.get('date');
-    const time = formData.get('time');
-    const comment = formData.get('comment') || '';
-    
-    if (!name || !phone || !serviceCode || !masterId || !date || !time) {
-        showNotification('Пожалуйста, заполните все обязательные поля', 'error');
+    if (!name || !phone || !selectedServiceId || !selectedMasterId || !date || !time) {
+        showNotification('Заполните все поля', 'error');
         return;
     }
     
-    const phoneRegex = /^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/;
-    if (!phoneRegex.test(phone)) {
+    if (!/^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/.test(phone)) {
         showNotification('Введите корректный номер телефона', 'error');
         return;
     }
     
-    // Получаем данные мастера из MASTERS_DATA
-    const master = MASTERS_DATA[masterId];
-    const masterName = master ? master.name : masterId;
-    const masterSpecialty = master?.specialty || '';
-    const isTopMaster = master?.isTop || false;
+    const master = MASTERS_DATA[selectedMasterId];
+    const serviceEl = document.querySelector(`.booking-service[data-service-id="${selectedServiceId}"] .booking-service__name`);
     
-    // Получаем название услуги из select
-    const serviceSelect = document.getElementById('service');
-    const serviceName = serviceSelect.options[serviceSelect.selectedIndex]?.text || serviceCode;
-    
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.textContent;
-    submitBtn.textContent = 'Отправка...';
-    submitBtn.disabled = true;
-    
-    // ТЕСТОВЫЙ РЕЖИМ: сохраняем в localStorage
     const booking = {
-        id: Date.now(),
-        name,
-        phone,
-        service: serviceName,
-        master: masterName,
-        masterSpecialty,
-        isTopMaster,
-        date,
-        time,
-        comment,
+        id: Date.now(), name, phone,
+        service: serviceEl?.textContent || selectedServiceId,
+        master: master?.name || selectedMasterId,
+        masterSpecialty: master?.specialty || '',
+        isTopMaster: master?.isTop || false,
+        date, time, comment,
         createdAt: new Date().toISOString()
     };
     
@@ -398,78 +410,96 @@ async function handleFormSubmit(e) {
     bookings.push(booking);
     localStorage.setItem('hohloma_bookings', JSON.stringify(bookings));
     
-    // Выводим в консоль
-    console.log('📋 НОВАЯ ЗАПИСЬ:');
-    console.log('├─ Имя:', name);
-    console.log('├─ Телефон:', phone);
-    console.log('├─ Услуга:', serviceName);
-    console.log(`├─ Мастер: ${isTopMaster ? '⭐ ' : ''}${masterName}${masterSpecialty ? ` (${masterSpecialty})` : ''}`);
-    console.log('├─ Дата/время:', date, time);
-    console.log('└─ Комментарий:', comment || '—');
-    console.log(`📊 Всего записей: ${bookings.length}`);
-    
-    // Очищаем форму
-    form.reset();
-    
-    const masterSelect = document.getElementById('master');
-    const timeSelect = document.getElementById('time');
-    if (masterSelect) {
-        masterSelect.innerHTML = '<option value="">— Сначала выберите услугу —</option>';
-        masterSelect.disabled = true;
-    }
-    if (timeSelect) {
-        timeSelect.innerHTML = '<option value="">— Сначала выберите дату —</option>';
-        timeSelect.disabled = true;
-    }
-    
-    const masterGroup = document.getElementById('master-group');
-    const datetimeGroup = document.getElementById('datetime-group');
-    const submitBtn2 = document.getElementById('submit-btn');
-    if (masterGroup) masterGroup.style.display = 'none';
-    if (datetimeGroup) datetimeGroup.style.display = 'none';
-    if (submitBtn2) submitBtn2.style.display = 'none';
-    
-    const notice = document.querySelector('.weekend-notice');
-    if (notice) notice.remove();
-    
-    showNotification('✅ Запись сохранена! Хорошего дня!', 'success');
+    console.log('📋 Новая запись:', booking);
+    showNotification('✅ Запись сохранена! Мы свяжемся с вами.', 'success');
     
     setTimeout(() => {
         const modal = document.getElementById('modal-booking');
-        if (modal) {
-            modal.classList.remove('modal-booking--active');
-            document.body.style.overflow = '';
-        }
+        if (modal) { modal.classList.remove('modal-booking--active'); document.body.style.overflow = ''; }
+        resetForm();
     }, 2000);
-    
-    submitBtn.textContent = originalText;
-    submitBtn.disabled = false;
 }
 
-function showNotification(message, type = 'info') {
+function resetForm() {
+    selectedServiceId = null;
+    selectedMasterId = null;
+    document.querySelectorAll('.booking-service, .booking-master').forEach(el => el.classList.remove('selected'));
+    const dateInput = document.getElementById('date');
+    const timeSelect = document.getElementById('time');
+    if (dateInput) dateInput.value = '';
+    if (timeSelect) { timeSelect.innerHTML = '<option value="">— Выберите время —</option>'; timeSelect.disabled = true; }
+    const nameInput = document.getElementById('name');
+    const phoneInput = document.getElementById('phone');
+    if (nameInput) nameInput.value = '';
+    if (phoneInput) phoneInput.value = '';
+    showStep(1);
+}
+
+function showStep(stepNumber) {
+    document.querySelectorAll('.booking-step').forEach(content => {
+        content.style.display = content.dataset.step == stepNumber ? 'block' : 'none';
+    });
+    document.querySelectorAll('.booking-steps__step').forEach(step => {
+        const stepNum = parseInt(step.dataset.step);
+        step.classList.remove('active', 'completed');
+        if (stepNum < stepNumber) step.classList.add('completed');
+        if (stepNum === stepNumber) step.classList.add('active');
+    });
+    currentStep = stepNumber;
+    if (stepNumber === 2 && selectedServiceId) loadMastersForService(selectedServiceId);
+    if (stepNumber === 3) { initCalendar(); initTimeSlots(); }
+    if (stepNumber === 4) updateBookingSummary();
+}
+
+function applyPresetContext() {
+    const { presetMasterId, presetServiceId } = currentContext;
+    if (presetServiceId) {
+        const serviceEl = document.querySelector(`.booking-service[data-service-id="${presetServiceId}"]`);
+        if (serviceEl) { serviceEl.click(); selectedServiceId = presetServiceId; }
+    }
+    if (selectedServiceId) {
+        loadMastersForService(selectedServiceId);
+        if (presetMasterId) {
+            setTimeout(() => {
+                const masterEl = document.querySelector(`.booking-master[data-master-id="${presetMasterId}"]`);
+                if (masterEl) { masterEl.click(); selectedMasterId = presetMasterId; }
+                setTimeout(() => { const nextBtn = document.querySelector('.btn-next[data-next="2"]'); if (nextBtn) nextBtn.click(); }, 200);
+            }, 300);
+        } else {
+            setTimeout(() => { const nextBtn = document.querySelector('.btn-next[data-next="2"]'); if (nextBtn) nextBtn.click(); }, 200);
+        }
+    } else if (presetMasterId) {
+        for (const [sId, mIds] of Object.entries(mastersByService)) {
+            if (mIds.includes(presetMasterId)) {
+                const serviceEl = document.querySelector(`.booking-service[data-service-id="${sId}"]`);
+                if (serviceEl) { serviceEl.click(); selectedServiceId = sId; break; }
+            }
+        }
+        setTimeout(() => {
+            if (selectedServiceId) {
+                loadMastersForService(selectedServiceId);
+                setTimeout(() => {
+                    const masterEl = document.querySelector(`.booking-master[data-master-id="${presetMasterId}"]`);
+                    if (masterEl) { masterEl.click(); selectedMasterId = presetMasterId; }
+                    setTimeout(() => { const nextBtn = document.querySelector('.btn-next[data-next="2"]'); if (nextBtn) nextBtn.click(); }, 200);
+                }, 300);
+            }
+        }, 100);
+    }
+}
+
+function showNotification(message, type) {
     const modal = document.getElementById('notification-modal');
     if (!modal) return;
-    
-    const modalMessage = modal.querySelector('.modal__message');
-    const modalIcon = modal.querySelector('.modal__icon');
-    
-    if (modalMessage) modalMessage.textContent = message;
-    
-    if (modalIcon) {
-        modalIcon.className = `modal__icon modal__icon--${type}`;
-        modalIcon.textContent = type === 'success' ? '✓' : '✗';
-    }
-    
+    const msgEl = modal.querySelector('.modal__message');
+    if (msgEl) msgEl.textContent = message;
     modal.classList.add('modal--active');
-    
-    setTimeout(() => {
-        modal.classList.remove('modal--active');
-    }, 5000);
+    setTimeout(() => modal.classList.remove('modal--active'), 5000);
 }
 
 function attachBookingButtons() {
-    const allButtons = document.querySelectorAll('.team-card__book, [data-modal-open], .nav__link--primary, .hero__actions .btn--primary');
-    allButtons.forEach(btn => {
+    const btns = document.querySelectorAll('[data-modal-open], .team-card__book, .price__book, .hero__actions .btn--primary, .nav__link--primary');
+    btns.forEach(btn => {
         btn.removeEventListener('click', handleBookingClick);
         btn.addEventListener('click', handleBookingClick);
     });
@@ -477,7 +507,10 @@ function attachBookingButtons() {
 
 function handleBookingClick(e) {
     e.preventDefault();
-    if (window.openBookingModal) {
-        window.openBookingModal();
-    }
+    const btn = e.currentTarget;
+    window.openBookingModal({
+        masterId: btn.getAttribute('data-master-id'),
+        serviceId: btn.getAttribute('data-service-id'),
+        source: btn.classList.contains('price__book') ? 'price' : btn.classList.contains('team-card__book') ? 'master-card' : 'nav'
+    });
 }

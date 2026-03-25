@@ -192,6 +192,228 @@
 .modal__icon--info {
     color: var(--color-gold);
 }
+
+.booking-steps__nav {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--color-gray);
+}
+
+.booking-steps__step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.booking-steps__step.active {
+    opacity: 1;
+}
+
+.booking-steps__step.completed {
+    opacity: 0.8;
+}
+
+.booking-steps__number {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-gray);
+    border-radius: 50%;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.booking-steps__step.active .booking-steps__number {
+    background: var(--color-gold);
+    color: var(--color-black);
+}
+
+.booking-steps__step.completed .booking-steps__number {
+    background: var(--color-gold);
+    opacity: 0.6;
+}
+
+.booking-steps__label {
+    font-size: 0.8rem;
+    color: var(--color-off-white);
+}
+
+/* Сетка услуг и мастеров */
+.booking-services__grid,
+.booking-masters__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.booking-service,
+.booking-master {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: var(--color-dark);
+    border: 1px solid var(--color-gray);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.booking-service:hover,
+.booking-master:hover {
+    border-color: var(--color-gold);
+}
+
+.booking-service.selected,
+.booking-master.selected {
+    border-color: var(--color-gold);
+    background: rgba(201, 162, 39, 0.1);
+}
+
+.booking-service__name {
+    font-size: 1rem;
+    margin-bottom: 5px;
+}
+
+.booking-service__meta {
+    display: flex;
+    gap: 15px;
+    font-size: 0.8rem;
+    color: var(--color-off-white);
+    opacity: 0.7;
+}
+
+.booking-service__price {
+    color: var(--color-gold);
+}
+
+.booking-service__radio,
+.booking-master__radio {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-gray);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.booking-service.selected .booking-service__radio,
+.booking-master.selected .booking-master__radio {
+    background: var(--color-gold);
+    border-color: var(--color-gold);
+    box-shadow: inset 0 0 0 3px var(--color-dark);
+}
+
+.booking-master {
+    gap: 15px;
+}
+
+.booking-master__avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.booking-master__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.booking-master__info {
+    flex: 1;
+}
+
+.booking-master__name {
+    font-size: 1rem;
+    margin-bottom: 2px;
+}
+
+.booking-master__specialty {
+    font-size: 0.8rem;
+    color: var(--color-off-white);
+    opacity: 0.7;
+}
+
+.booking-master__rating {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.booking-master__stars {
+    color: var(--color-gold);
+    font-size: 0.8rem;
+}
+
+.booking-master__reviews {
+    font-size: 0.7rem;
+    color: var(--color-off-white);
+}
+
+/* Сводка заказа */
+.booking-summary {
+    background: var(--color-dark);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.booking-summary__item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--color-gray);
+}
+
+.booking-summary__item:last-child {
+    border-bottom: none;
+}
+
+.booking-summary__label {
+    color: var(--color-off-white);
+    opacity: 0.7;
+}
+
+.booking-summary__value {
+    font-weight: 600;
+    color: var(--color-gold);
+}
+
+.booking-step__actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .booking-steps__label {
+        font-size: 0.7rem;
+    }
+    
+    .booking-services__grid,
+    .booking-masters__grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .booking-service,
+    .booking-master {
+        padding: 12px;
+    }
+}
 @keyframes modalFadeIn {
     from {
         opacity: 0;

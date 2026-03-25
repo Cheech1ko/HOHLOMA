@@ -409,3 +409,31 @@
         align-self: flex-end;
     }
 }
+
+@media (max-width: 768px) {
+    .price__section-title {
+        font-size: 1.3rem;
+    }
+    
+    .price__grid-2 {
+        grid-template-columns: 1fr;
+    }
+    
+    .price__masters-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .price__buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .price__buttons .btn {
+        width: 100%;
+        max-width: 280px;
+    }
+    
+    .price__card-value {
+        font-size: 1.2rem;
+    }
+}

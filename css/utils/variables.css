@@ -1,7 +1,7 @@
 :root {
          /* Шрифты */
-    --font-main: 'Montserrat', sans-serif;
-    --font-headers: 'Cormorant Garamond', serif;
+    --font-headers: 'Playfair Display', serif;
+    --font-main: 'Inter', sans-serif;
     
     /* Размеры */
     --text-xs: 0.75rem;
@@ -26,7 +26,7 @@
     --color-gold: #c9a227;
     --color-gold-light: #dbb957;
     --color-gold-dark: #a07e1f;
-    
+
     /* Цветовая схема */
     --color-black: #0a0a0a;
     --color-dark: #1a1a1a;
@@ -49,8 +49,6 @@
     --color-barber-secondary: #b22222;
     
     /* Типографика */
-    --font-main: 'Montserrat', sans-serif;
-    --font-headers: 'Cormorant Garamond', serif;
     
     /* Размеры */
     --container-width: 1280px;

@@ -119,7 +119,7 @@ export const MASTERS_DATA = {
         name: 'Виктория Томс',
         specialty: 'пирсер',
         experience: '7 лет',
-        image: 'assets/images/masters/victoria-piercing.jpg',
+        image: 'assets/images/masters/viktorija-pirser-master.jpg',
         bio: 'Медицинское образование. Любые виды пирсинга, микродермалы.',
         category: 'piercing',
         isTop: true
@@ -129,7 +129,7 @@ export const MASTERS_DATA = {
         name: 'Алексей Бобров',
         specialty: 'младший пирсер',
         experience: '2 года',
-        image: 'assets/images/masters/alexey-piercing.jpg',
+        image: 'assets/images/masters/aleksej-mladshij-pirser.jpg',
         bio: 'Проколы мочек, хрящей, пупка.',
         category: 'piercing',
         isTop: false
@@ -141,7 +141,7 @@ export const MASTERS_DATA = {
         name: 'Алексей Авакумов',
         specialty: 'массажист',
         experience: '12 лет',
-        image: 'assets/images/masters/alexey-massage.jpg',
+        image: 'assets/images/masters/aleksej-massazhist.jpg',
         bio: 'Классический, спортивный, антицеллюлитный массаж.',
         category: 'massage',
         isTop: true

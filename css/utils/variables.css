@@ -1,5 +1,5 @@
 :root {
-        /* Шрифты */
+         /* Шрифты */
     --font-main: 'Montserrat', sans-serif;
     --font-headers: 'Cormorant Garamond', serif;
     
@@ -15,6 +15,18 @@
     --text-5xl: 3rem;
     --text-6xl: 3.75rem;
     --text-7xl: 4.5rem;
+    
+    /* Цвета */
+    --color-black: #0a0a0a;
+    --color-dark: #1a1a1a;
+    --color-gray: #2a2a2a;
+    --color-light-gray: #3a3a3a;
+    --color-white: #ffffff;
+    --color-off-white: #f5f5f5;
+    --color-gold: #c9a227;
+    --color-gold-light: #dbb957;
+    --color-gold-dark: #a07e1f;
+    
     /* Цветовая схема */
     --color-black: #0a0a0a;
     --color-dark: #1a1a1a;

@@ -271,7 +271,6 @@ export function initAnimations() {
         });
     });
     
-    // === ЭФФЕКТ ДЛЯ КНОПОК ===
     document.querySelectorAll('.btn').forEach(btn => {
         btn.addEventListener('mouseenter', () => {
             gsap.to(btn, {
@@ -292,7 +291,6 @@ export function initAnimations() {
         });
     });
     
-    // === ПЛАВНЫЙ СКРОЛЛ ===
     document.querySelectorAll('.nav__link[href^="#"]:not([data-service]), .hero__actions .btn--outline').forEach(link => {
         link.addEventListener('click', function(e) {
             const href = this.getAttribute('href');

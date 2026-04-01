@@ -352,7 +352,7 @@ function showWeekendNotice(show) {
         if (dateField?.parentNode) {
             notice = document.createElement('div');
             notice.className = 'weekend-notice';
-            notice.innerHTML = '💰 В выходные и праздничные дни наценка +200₽';
+            notice.innerHTML = 'В выходные и праздничные дни наценка +200₽';
             dateField.parentNode.appendChild(notice);
         }
     }

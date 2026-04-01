@@ -526,7 +526,7 @@ async function handleFormSubmit(e) {
     submitBtn.disabled = true;
     
     try {
-        const response = await fetch('https://script.google.com/macros/library/d/19YyNCxLq26qir9b9-Q0d4Mzq0C9mrgJ4dKvNTp_SRnyPiBkmT_0jMzIe/2', {
+        const response = await fetch('https://script.google.com/macros/s/AKfycbwWIwnLrVRqkuVI4yYiBRcpV5JrCxgxC0sK8iJuRO3dZtA0CvIE-JbSRN6CnXwBPCpcFw/exec', {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },

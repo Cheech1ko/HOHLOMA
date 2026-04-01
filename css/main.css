@@ -16,6 +16,7 @@
 @import url('components/forms.css');
 @import url('components/modals.css');
 @import url('components/footer.css');
+@import url('components/preloader.css');
 
 /* Sections */
 @import url('sections/hero.css');
@@ -28,6 +29,7 @@
 @import url('sections/contacts.css');
 @import url('sections/about.css');
 @import url('sections/price.css');
+
 
 /* Базовые стили */
 *,

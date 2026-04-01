@@ -3,7 +3,9 @@ import { getMastersByService, MASTERS_DATA } from './mastersData.js';
 let currentStep = 1;
 let selectedServiceId = null;
 let selectedMasterId = null;
+let weekendSurcharge = 0;
 let currentContext = { presetMasterId: null, presetServiceId: null, source: null };
+
 
 const mastersByService = {
     'tattoo-individual': ['daniil-tattoo', 'anastasia-tattoo', 'yuri-tattoo'],
@@ -26,6 +28,77 @@ const mastersByService = {
     'barber-shave-classic': ['vladimir-barber', 'kirill-barber', 'arianna-barber'],
     'barber-shave-razor': ['vladimir-barber', 'kirill-barber', 'arianna-barber']
 };
+
+
+function getServicesList() {
+    return [
+        // БАРБЕРШОП
+        { id: 'barber-haircut-men', name: 'Мужская стрижка', basePrice: 1400, time: '1 час' },
+        { id: 'barber-haircut-kids', name: 'Детская стрижка (4-12 лет)', basePrice: 1100, time: '45 мин' },
+        { id: 'barber-beard-modeling', name: 'Оформление бороды / усов', basePrice: 900, time: '30 мин' },
+        { id: 'barber-haircut-beard', name: 'Стрижка + оформление бороды', basePrice: 2000, time: '1 час 30 мин' },
+        { id: 'barber-haircut-machine', name: 'Стрижка машинкой', basePrice: 800, time: '30 мин' },
+        { id: 'barber-shave-bald', name: 'Бритьё наголо', basePrice: 1000, time: '30 мин' },
+        { id: 'barber-shave-royal', name: 'Королевское бритьё', basePrice: 1100, time: '45 мин' },
+        { id: 'barber-styling', name: 'Укладка', basePrice: 500, time: '20 мин' },
+        { id: 'barber-correction', name: 'Коррекция стрижки', basePrice: 300, time: '20 мин' },
+        { id: 'barber-father-son', name: 'Отец + сын', basePrice: 2000, time: '1 час 30 мин' },
+        { id: 'barber-hair-toning', name: 'Тонирование волос', basePrice: 1500, time: '45 мин' },
+        { id: 'barber-beard-toning', name: 'Тонирование бороды', basePrice: 1100, time: '30 мин' },
+        { id: 'barber-coloring', name: 'Окрашивание', basePrice: 3000, time: '1 час 30 мин' },
+        
+        // ТАТУ
+        { id: 'tattoo-small', name: 'Небольшая татуировка', basePrice: 4000, time: '2 часа' },
+        { id: 'tattoo-session', name: '1 сеанс (3 часа)', basePrice: 9000, time: '3 часа' },
+        { id: 'tattoo-cover', name: 'Перекрытие тату', basePrice: 17000, time: '3 часа' },
+        
+        // ПИРСИНГ
+        { id: 'piercing-ear', name: 'Пирсинг уха', basePrice: 1000, time: '30 мин' },
+        { id: 'piercing-nose', name: 'Пирсинг носа', basePrice: 1500, time: '30 мин' },
+        { id: 'piercing-lip', name: 'Пирсинг губы', basePrice: 1500, time: '30 мин' },
+        { id: 'piercing-navel', name: 'Пирсинг пупка', basePrice: 2000, time: '30 мин' },
+        
+        // МАССАЖ
+        { id: 'massage-classic', name: 'Классический массаж', basePrice: 2000, time: '60 мин' },
+        { id: 'massage-sport', name: 'Спортивный массаж', basePrice: 2500, time: '60 мин' },
+        { id: 'massage-anticellulite', name: 'Антицеллюлитный массаж', basePrice: 2200, time: '60 мин' }
+    ];
+}
+
+
+function getBasePrice(serviceId) {
+    const services = getServicesList();
+    const service = services.find(s => s.id === serviceId);
+    return service ? service.basePrice : 0;
+}
+
+
+function getMasterSurcharge(masterId) {
+    const master = MASTERS_DATA[masterId];
+    if (!master) return 0;
+    
+
+    if (master.id === 'vladimir-barber' || master.id === 'kirill-barber') return 400;
+
+    if (master.id === 'evgeniy-barber') return 200;
+
+    return 0;
+}
+
+
+function getTotalPrice(serviceId, masterId, weekend = false) {
+    const basePrice = getBasePrice(serviceId);
+    const masterSurcharge = getMasterSurcharge(masterId);
+    const weekendSurchargeValue = weekend ? 200 : 0;
+    return basePrice + masterSurcharge + weekendSurchargeValue;
+}
+
+
+function getServiceName(serviceId) {
+    const services = getServicesList();
+    const service = services.find(s => s.id === serviceId);
+    return service ? service.name : serviceId;
+}
 
 export function initBookingForm() {
     const modal = document.getElementById('modal-booking');
@@ -294,18 +367,44 @@ function updateBookingSummary() {
     const summary = document.getElementById('booking-summary');
     if (!summary) return;
     
-    const serviceEl = document.querySelector(`.booking-service[data-service-id="${selectedServiceId}"]`);
-    const serviceName = serviceEl?.querySelector('.booking-service__name')?.textContent || '—';
-    const servicePrice = serviceEl?.querySelector('.booking-service__price')?.textContent || '—';
+    const serviceName = getServiceName(selectedServiceId);
+    const basePrice = getBasePrice(selectedServiceId);
+    const masterSurcharge = getMasterSurcharge(selectedMasterId);
     const master = MASTERS_DATA[selectedMasterId];
     const masterName = master?.name || '—';
     const date = document.getElementById('date')?.value || '—';
     const time = document.getElementById('time')?.value || '—';
     
+    const totalPrice = basePrice + masterSurcharge + weekendSurcharge;
+    
+    let priceHtml = `${basePrice}₽`;
+    if (masterSurcharge > 0) {
+        priceHtml = `${basePrice}₽ + ${masterSurcharge}₽ (${master?.specialty || 'профи'})`;
+    }
+    if (weekendSurcharge > 0) {
+        priceHtml += ` + 200₽ (выходной)`;
+    }
+    
     summary.innerHTML = `
-        <div class="booking-summary__item"><span class="booking-summary__label">Услуга:</span><span class="booking-summary__value">${serviceName} (${servicePrice})</span></div>
-        <div class="booking-summary__item"><span class="booking-summary__label">Мастер:</span><span class="booking-summary__value">${masterName}</span></div>
-        <div class="booking-summary__item"><span class="booking-summary__label">Дата и время:</span><span class="booking-summary__value">${date} ${time}</span></div>
+        <div class="booking-summary__item">
+            <span class="booking-summary__label">Услуга:</span>
+            <span class="booking-summary__value">${serviceName}</span>
+        </div>
+        <div class="booking-summary__item">
+            <span class="booking-summary__label">Мастер:</span>
+            <span class="booking-summary__value">${masterName}${master?.specialty ? ` (${master.specialty})` : ''}</span>
+        </div>
+        <div class="booking-summary__item">
+            <span class="booking-summary__label">Дата и время:</span>
+            <span class="booking-summary__value">${date} ${time}</span>
+        </div>
+        <div class="booking-summary__item booking-summary__total">
+            <span class="booking-summary__label">Итого:</span>
+            <span class="booking-summary__value">${totalPrice}₽</span>
+        </div>
+        <div class="booking-summary__detail">
+            <small>${priceHtml}</small>
+        </div>
     `;
 }
 
@@ -325,11 +424,21 @@ function initCalendar() {
             else if (dayDate.toDateString() === today.toDateString()) dayElem.style.border = '2px solid #c9a227';
             else if (dayDate.getDay() === 0 || dayDate.getDay() === 6) dayElem.style.color = '#dbb957';
         },
-        onChange: (dates, dateStr) => {
-            const timeSelect = document.getElementById('time');
-            if (timeSelect && dateStr) timeSelect.disabled = false;
-            showWeekendNotice(dates[0] && (dates[0].getDay() === 0 || dates[0].getDay() === 6));
-        }
+        onChange: function(selectedDates, dateStr) {
+    const timeSelect = document.getElementById('time');
+    if (timeSelect && dateStr) {
+        timeSelect.disabled = false;
+    }
+    
+    if (selectedDates[0]) {
+        const dayOfWeek = selectedDates[0].getDay();
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+        weekendSurcharge = isWeekend ? 200 : 0;
+        showWeekendNotice(isWeekend);
+        
+        updateBookingSummary();
+    }
+}
     });
 }
 
@@ -346,6 +455,7 @@ function initTimeSlots() {
 }
 
 function showWeekendNotice(show) {
+    let weekendSurcharge = 0;
     let notice = document.querySelector('.weekend-notice');
     if (show && !notice) {
         const dateField = document.getElementById('date');
@@ -377,6 +487,7 @@ function initPhoneMask() {
 
 async function handleFormSubmit(e) {
     e.preventDefault();
+    
     const name = document.getElementById('name')?.value;
     const phone = document.getElementById('phone')?.value;
     const date = document.getElementById('date')?.value;
@@ -394,59 +505,60 @@ async function handleFormSubmit(e) {
     }
     
     const master = MASTERS_DATA[selectedMasterId];
-    const serviceEl = document.querySelector(`.booking-service[data-service-id="${selectedServiceId}"] .booking-service__name`);
+    const serviceName = getServiceName(selectedServiceId);
+    const totalPrice = getTotalPrice(selectedServiceId, selectedMasterId, weekendSurcharge > 0);
     
     const bookingData = {
         name: name,
         phone: phone,
-        service: serviceEl?.textContent || selectedServiceId,
+        service: serviceName,
         master: master?.name || selectedMasterId,
+        masterLevel: master?.specialty || '',
         date: date,
         time: time,
+        price: totalPrice,
         comment: comment
     };
-
+    
     const submitBtn = document.querySelector('#booking-form button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.textContent = 'Отправка...';
     submitBtn.disabled = true;
-
+    
     try {
-
-        const response = await fetch('https://script.google.com/macros/s/AKfycbwWIwnLrVRqkuVI4yYiBRcpV5JrCxgxC0sK8iJuRO3dZtA0CvIE-JbSRN6CnXwBPCpcFw/exec', {
+        const response = await fetch('https://script.google.com/macros/library/d/19YyNCxLq26qir9b9-Q0d4Mzq0C9mrgJ4dKvNTp_SRnyPiBkmT_0jMzIe/2', {
             method: 'POST',
             mode: 'no-cors',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(bookingData)
         });
-
-        const booking = JSON.parse(localStorage.getItem('hohloma_bookings') || '[]');
-        booking.push({ ...bookingData, id: Date.now(),createAt: new Date().toISOString() });
-        localStorage.setItem('hohloma_bookings', JSON.stringify(booking));
-
-        console.log('Запись отправлена в Google Sheets:', bookingData);
-        showNotification('Запись сохранена!', 'succes');
-
+        
+        const bookings = JSON.parse(localStorage.getItem('hohloma_bookings') || '[]');
+        bookings.push({ ...bookingData, id: Date.now(), createdAt: new Date().toISOString() });
+        localStorage.setItem('hohloma_bookings', JSON.stringify(bookings));
+        
+        console.log('Запись отправлена:', bookingData);
+        showNotification('Запись сохранена!', 'success');
+        
         resetForm();
-
+        
         setTimeout(() => {
             const modal = document.getElementById('modal-booking');
             if (modal) {
                 modal.classList.remove('modal-booking--active');
                 document.body.style.overflow = '';
             }
-        }, 1500);
-
-    } catch {
-        console.error('Ошибка отправки:', error);
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Ошибка:', error);
         showNotification('Ошибка при отправке. Попробуйте позже.', 'error');
     } finally {
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
     }
 }
+
 function resetForm() {
     selectedServiceId = null;
     selectedMasterId = null;

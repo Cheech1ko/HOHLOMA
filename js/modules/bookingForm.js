@@ -413,7 +413,7 @@ async function handleFormSubmit(e) {
 
     try {
 
-        const response = await fetch('https://script.google.com/macros/s/AKfycbxLUaaBcPHyq69H7v4w-9Boescmf7XAhGWlWKFkopTf5RdwdRzcZ1UujasasFGAWk38kQ/exec', {
+        const response = await fetch('https://script.google.com/macros/s/AKfycbwWIwnLrVRqkuVI4yYiBRcpV5JrCxgxC0sK8iJuRO3dZtA0CvIE-JbSRN6CnXwBPCpcFw/exec', {
             method: 'POST',
             mode: 'no-cors',
             headers: {

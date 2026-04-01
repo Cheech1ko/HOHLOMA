@@ -396,30 +396,57 @@ async function handleFormSubmit(e) {
     const master = MASTERS_DATA[selectedMasterId];
     const serviceEl = document.querySelector(`.booking-service[data-service-id="${selectedServiceId}"] .booking-service__name`);
     
-    const booking = {
-        id: Date.now(), name, phone,
+    const bookingData = {
+        name: name,
+        phone: phone,
         service: serviceEl?.textContent || selectedServiceId,
         master: master?.name || selectedMasterId,
-        masterSpecialty: master?.specialty || '',
-        isTopMaster: master?.isTop || false,
-        date, time, comment,
-        createdAt: new Date().toISOString()
+        date: date,
+        time: time,
+        comment: comment
     };
-    
-    const bookings = JSON.parse(localStorage.getItem('hohloma_bookings') || '[]');
-    bookings.push(booking);
-    localStorage.setItem('hohloma_bookings', JSON.stringify(bookings));
-    
-    console.log('📋 Новая запись:', booking);
-    showNotification('✅ Запись сохранена! Мы свяжемся с вами.', 'success');
-    
-    setTimeout(() => {
-        const modal = document.getElementById('modal-booking');
-        if (modal) { modal.classList.remove('modal-booking--active'); document.body.style.overflow = ''; }
-        resetForm();
-    }, 2000);
-}
 
+    const submitBtn = document.querySelector('#booking-form button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Отправка...';
+    submitBtn.disabled = true;
+
+    try {
+
+        const response = await fetch('https://script.google.com/macros/s/AKfycbxLUaaBcPHyq69H7v4w-9Boescmf7XAhGWlWKFkopTf5RdwdRzcZ1UujasasFGAWk38kQ/exec', {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(bookingData)
+        });
+
+        const booking = JSON.parse(localStorage.getItem('hohloma_bookings') || '[]');
+        booking.push({ ...bookingData, id: Date.now(),createAt: new Date().toISOString() });
+        localStorage.setItem('hohloma_bookings', JSON.stringify(booking));
+
+        console.log('Запись отправлена в Google Sheets:', bookingData);
+        showNotification('Запись сохранена!', 'succes');
+
+        resetForm();
+
+        setTimeout(() => {
+            const modal = document.getElementById('modal-booking');
+            if (modal) {
+                modal.classList.remove('modal-booking--active');
+                document.body.style.overflow = '';
+            }
+        }, 1500);
+
+    } catch {
+        console.error('Ошибка отправки:', error);
+        showNotification('Ошибка при отправке. Попробуйте позже.', 'error');
+    } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    }
+}
 function resetForm() {
     selectedServiceId = null;
     selectedMasterId = null;

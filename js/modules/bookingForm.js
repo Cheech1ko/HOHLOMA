@@ -48,9 +48,9 @@ function getServicesList() {
         { id: 'barber-coloring', name: 'Окрашивание', basePrice: 3000, time: '1 час 30 мин' },
         
         // ТАТУ
-        { id: 'tattoo-small', name: 'Небольшая татуировка', basePrice: 4000, time: '2 часа' },
-        { id: 'tattoo-session', name: '1 сеанс (3 часа)', basePrice: 9000, time: '3 часа' },
-        { id: 'tattoo-cover', name: 'Перекрытие тату', basePrice: 17000, time: '3 часа' },
+        { id: 'tattoo-individual', name: 'Татуировка (индивидуальный эскиз)', basePrice: 4000, time: '2 часа' },
+        { id: 'tattoo-catalog', name: 'Татуировка (из каталога)', basePrice: 4000, time: '2 часа' },
+        { id: 'tattoo-cover', name: 'Перекрытие/исправление тату', basePrice: 8000, time: '3 часа' },
         
         // ПИРСИНГ
         { id: 'piercing-ear', name: 'Пирсинг уха', basePrice: 1000, time: '30 мин' },

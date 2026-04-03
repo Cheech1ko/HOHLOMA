@@ -334,6 +334,12 @@
         text-align: center;
     }
 }
+.nav__divider {
+    width: 1px;
+    height: 24px;
+    background: var(--color-gold-light);
+    margin: 0 8px;
+}
 
 /* ==================== МАЛЕНЬКИЕ МОБИЛЬНЫЕ (до 480px) ==================== */
 @media (max-width: 480px) {
@@ -348,3 +354,8 @@
     }
 }
 
+@media (max-width: 1024px) {
+    .nav__divider {
+        display: none;
+    }
+}

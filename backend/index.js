@@ -11,6 +11,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static('.'));
 
+const path = require('path');
+app.use(express.static(path.join(__dirname, '..')));
+
 
 app.get('/api/admin/bookings', async (req, res) => {
     try {

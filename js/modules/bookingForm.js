@@ -6,7 +6,6 @@ let selectedMasterId = null;
 let weekendSurcharge = 0;
 let currentContext = { presetMasterId: null, presetServiceId: null, source: null };
 
-
 const mastersByService = {
     'tattoo-individual': ['daniil-tattoo', 'anastasia-tattoo', 'yuri-tattoo'],
     'tattoo-catalog': ['daniil-tattoo', 'anastasia-tattoo', 'yuri-tattoo'],
@@ -29,42 +28,40 @@ const mastersByService = {
     'barber-shave-razor': ['vladimir-barber', 'kirill-barber', 'arianna-barber']
 };
 
-
 function getServicesList() {
     return [
         // БАРБЕРШОП
-        { id: 'barber-haircut-men', name: 'Мужская стрижка', basePrice: 1400, time: '1 час' },
-        { id: 'barber-haircut-kids', name: 'Детская стрижка (4-12 лет)', basePrice: 1100, time: '45 мин' },
-        { id: 'barber-beard-modeling', name: 'Оформление бороды / усов', basePrice: 900, time: '30 мин' },
-        { id: 'barber-haircut-beard', name: 'Стрижка + оформление бороды', basePrice: 2000, time: '1 час 30 мин' },
-        { id: 'barber-haircut-machine', name: 'Стрижка машинкой', basePrice: 800, time: '30 мин' },
-        { id: 'barber-shave-bald', name: 'Бритьё наголо', basePrice: 1000, time: '30 мин' },
-        { id: 'barber-shave-royal', name: 'Королевское бритьё', basePrice: 1100, time: '45 мин' },
-        { id: 'barber-styling', name: 'Укладка', basePrice: 500, time: '20 мин' },
-        { id: 'barber-correction', name: 'Коррекция стрижки', basePrice: 300, time: '20 мин' },
-        { id: 'barber-father-son', name: 'Отец + сын', basePrice: 2000, time: '1 час 30 мин' },
-        { id: 'barber-hair-toning', name: 'Тонирование волос', basePrice: 1500, time: '45 мин' },
-        { id: 'barber-beard-toning', name: 'Тонирование бороды', basePrice: 1100, time: '30 мин' },
-        { id: 'barber-coloring', name: 'Окрашивание', basePrice: 3000, time: '1 час 30 мин' },
+        { id: 'barber-haircut-men', name: 'Мужская стрижка', basePrice: 1400, time: '1 час', category: 'barber' },
+        { id: 'barber-haircut-kids', name: 'Детская стрижка (4-12 лет)', basePrice: 1100, time: '45 мин', category: 'barber' },
+        { id: 'barber-beard-modeling', name: 'Оформление бороды / усов', basePrice: 900, time: '30 мин', category: 'barber' },
+        { id: 'barber-haircut-beard', name: 'Стрижка + оформление бороды', basePrice: 2000, time: '1 час 30 мин', category: 'barber' },
+        { id: 'barber-haircut-machine', name: 'Стрижка машинкой', basePrice: 800, time: '30 мин', category: 'barber' },
+        { id: 'barber-shave-bald', name: 'Бритьё наголо', basePrice: 1000, time: '30 мин', category: 'barber' },
+        { id: 'barber-shave-royal', name: 'Королевское бритьё', basePrice: 1100, time: '45 мин', category: 'barber' },
+        { id: 'barber-styling', name: 'Укладка', basePrice: 500, time: '20 мин', category: 'barber' },
+        { id: 'barber-correction', name: 'Коррекция стрижки', basePrice: 300, time: '20 мин', category: 'barber' },
+        { id: 'barber-father-son', name: 'Отец + сын', basePrice: 2000, time: '1 час 30 мин', category: 'barber' },
+        { id: 'barber-hair-toning', name: 'Тонирование волос', basePrice: 1500, time: '45 мин', category: 'barber' },
+        { id: 'barber-beard-toning', name: 'Тонирование бороды', basePrice: 1100, time: '30 мин', category: 'barber' },
+        { id: 'barber-coloring', name: 'Окрашивание', basePrice: 3000, time: '1 час 30 мин', category: 'barber' },
         
         // ТАТУ
-        { id: 'tattoo-individual', name: 'Татуировка (индивидуальный эскиз)', basePrice: 4000, time: '2 часа' },
-        { id: 'tattoo-catalog', name: 'Татуировка (из каталога)', basePrice: 4000, time: '2 часа' },
-        { id: 'tattoo-cover', name: 'Перекрытие/исправление тату', basePrice: 8000, time: '3 часа' },
+        { id: 'tattoo-individual', name: 'Татуировка (индивидуальный эскиз)', basePrice: 4000, time: '2 часа', category: 'tattoo' },
+        { id: 'tattoo-catalog', name: 'Татуировка (из каталога)', basePrice: 4000, time: '2 часа', category: 'tattoo' },
+        { id: 'tattoo-cover', name: 'Перекрытие/исправление тату', basePrice: 8000, time: '3 часа', category: 'tattoo' },
         
         // ПИРСИНГ
-        { id: 'piercing-ear', name: 'Пирсинг уха', basePrice: 1000, time: '30 мин' },
-        { id: 'piercing-nose', name: 'Пирсинг носа', basePrice: 1500, time: '30 мин' },
-        { id: 'piercing-lip', name: 'Пирсинг губы', basePrice: 1500, time: '30 мин' },
-        { id: 'piercing-navel', name: 'Пирсинг пупка', basePrice: 2000, time: '30 мин' },
+        { id: 'piercing-ear', name: 'Пирсинг уха', basePrice: 1000, time: '30 мин', category: 'piercing' },
+        { id: 'piercing-nose', name: 'Пирсинг носа', basePrice: 1500, time: '30 мин', category: 'piercing' },
+        { id: 'piercing-lip', name: 'Пирсинг губы', basePrice: 1500, time: '30 мин', category: 'piercing' },
+        { id: 'piercing-navel', name: 'Пирсинг пупка', basePrice: 2000, time: '30 мин', category: 'piercing' },
         
         // МАССАЖ
-        { id: 'massage-classic', name: 'Классический массаж', basePrice: 2000, time: '60 мин' },
-        { id: 'massage-sport', name: 'Спортивный массаж', basePrice: 2500, time: '60 мин' },
-        { id: 'massage-anticellulite', name: 'Антицеллюлитный массаж', basePrice: 2200, time: '60 мин' }
+        { id: 'massage-classic', name: 'Классический массаж', basePrice: 2000, time: '60 мин', category: 'massage' },
+        { id: 'massage-sport', name: 'Спортивный массаж', basePrice: 2500, time: '60 мин', category: 'massage' },
+        { id: 'massage-anticellulite', name: 'Антицеллюлитный массаж', basePrice: 2200, time: '60 мин', category: 'massage' }
     ];
 }
-
 
 function getBasePrice(serviceId) {
     const services = getServicesList();
@@ -72,19 +69,13 @@ function getBasePrice(serviceId) {
     return service ? service.basePrice : 0;
 }
 
-
 function getMasterSurcharge(masterId) {
     const master = MASTERS_DATA[masterId];
     if (!master) return 0;
-    
-
     if (master.id === 'vladimir-barber' || master.id === 'kirill-barber') return 400;
-
     if (master.id === 'evgeniy-barber') return 200;
-
     return 0;
 }
-
 
 function getTotalPrice(serviceId, masterId, weekend = false) {
     const basePrice = getBasePrice(serviceId);
@@ -93,7 +84,6 @@ function getTotalPrice(serviceId, masterId, weekend = false) {
     return basePrice + masterSurcharge + weekendSurchargeValue;
 }
 
-
 function getServiceName(serviceId) {
     const services = getServicesList();
     const service = services.find(s => s.id === serviceId);
@@ -101,6 +91,8 @@ function getServiceName(serviceId) {
 }
 
 export function initBookingForm() {
+    console.log('Initializing booking form...');
+    
     const modal = document.getElementById('modal-booking');
     const modalClose = document.getElementById('modal-booking-close');
     const modalOverlay = modal?.querySelector('.modal-booking__overlay');
@@ -182,7 +174,7 @@ export function initBookingForm() {
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Комментарий</label>
+                            <label class="form-label">Комментарий (опционально)</label>
                             <textarea name="comment" class="form-textarea" rows="3" placeholder="Дополнительная информация..."></textarea>
                         </div>
                         <div class="form-group form-group--policy">
@@ -199,7 +191,7 @@ export function initBookingForm() {
         `;
     }
     
-    initServicesGrid();
+    // initServicesGrid(currentContext.section);
     initStepNavigation();
     initPhoneMask();
     
@@ -208,21 +200,26 @@ export function initBookingForm() {
     
     attachBookingButtons();
     
-    window.openBookingModal = function(context = {}) {
-        currentContext = {
-            presetMasterId: context.masterId || null,
-            presetServiceId: context.serviceId || null,
-            source: context.source || null
-        };
-        
-        modal.classList.add('modal-booking--active');
-        document.body.style.overflow = 'hidden';
-        resetForm();
-        
-        if (currentContext.presetMasterId) {
-            setTimeout(() => applyPresetContext(), 100);
-        }
+window.openBookingModal = function(context = {}) {
+    console.log('📌 openBookingModal вызван с контекстом:', context);
+    
+    currentContext = {
+        presetMasterId: context.masterId || null,
+        presetServiceId: context.serviceId || null,
+        source: context.source || null,
+        section: context.section || 'all'
     };
+    
+    // 👇 ВОТ ЭТО ВАЖНО — обновляем услуги при открытии
+    initServicesGrid(currentContext.section);
+    
+    modal.classList.add('modal-booking--active');
+    document.body.style.overflow = 'hidden';
+    
+    if (currentContext.presetMasterId) {
+        setTimeout(() => applyPresetContext(), 100);
+    }
+};
     
     if (modalClose) modalClose.addEventListener('click', () => {
         modal.classList.remove('modal-booking--active');
@@ -245,32 +242,25 @@ export function initBookingForm() {
     });
 }
 
-function initServicesGrid() {
+function initServicesGrid(section = 'all') {
     const servicesGrid = document.getElementById('services-grid');
     if (!servicesGrid) return;
     
-    const services = [
-        { id: 'tattoo-individual', name: 'Татуировка (индивидуальный эскиз)', category: 'tattoo', price: 'от 4 000₽', time: '3 часа' },
-        { id: 'tattoo-catalog', name: 'Татуировка (из каталога)', category: 'tattoo', price: 'от 4 000₽', time: '2 часа' },
-        { id: 'tattoo-cover', name: 'Перекрытие/исправление тату', category: 'tattoo', price: 'от 8 000₽', time: '3 часа' },
-        { id: 'piercing-ear', name: 'Пирсинг уха', category: 'piercing', price: 'от 1 000₽', time: '30 мин' },
-        { id: 'piercing-nose', name: 'Пирсинг носа', category: 'piercing', price: 'от 1 500₽', time: '30 мин' },
-        { id: 'piercing-lip', name: 'Пирсинг губы', category: 'piercing', price: 'от 1 500₽', time: '30 мин' },
-        { id: 'piercing-navel', name: 'Пирсинг пупка', category: 'piercing', price: 'от 2 000₽', time: '30 мин' },
-        { id: 'massage-classic', name: 'Классический массаж', category: 'massage', price: '2 000₽', time: '60 мин' },
-        { id: 'massage-sport', name: 'Спортивный массаж', category: 'massage', price: '2 500₽', time: '60 мин' },
-        { id: 'barber-haircut-men', name: 'Мужская стрижка', category: 'barber', price: 'от 1 400₽', time: '1 час' },
-        { id: 'barber-haircut-kids', name: 'Детская стрижка', category: 'barber', price: 'от 1 100₽', time: '45 мин' },
-        { id: 'barber-beard-modeling', name: 'Моделирование бороды', category: 'barber', price: 'от 900₽', time: '30 мин' },
-        { id: 'barber-shave-classic', name: 'Классическое бритьё', category: 'barber', price: 'от 1 100₽', time: '30 мин' }
-    ];
+    const services = getServicesList();
     
-    servicesGrid.innerHTML = services.map(s => `
-        <div class="booking-service" data-service-id="${s.id}">
+    let filteredServices = services;
+    if (section !== 'all') {
+        filteredServices = services.filter(s => s.category === section);
+    }
+    
+    console.log(`📋 Отображаем услуги для секции: ${section}`, filteredServices);
+    
+    servicesGrid.innerHTML = filteredServices.map(s => `
+        <div class="booking-service" data-service-id="${s.id}" data-category="${s.category}">
             <div class="booking-service__info">
                 <h4 class="booking-service__name">${s.name}</h4>
                 <div class="booking-service__meta">
-                    <span class="booking-service__price">${s.price}</span>
+                    <span class="booking-service__price">от ${s.basePrice}₽</span>
                     <span class="booking-service__time">⏱ ${s.time}</span>
                 </div>
             </div>
@@ -424,21 +414,14 @@ function initCalendar() {
             else if (dayDate.toDateString() === today.toDateString()) dayElem.style.border = '2px solid #c9a227';
             else if (dayDate.getDay() === 0 || dayDate.getDay() === 6) dayElem.style.color = '#dbb957';
         },
-        onChange: function(selectedDates, dateStr) {
-    const timeSelect = document.getElementById('time');
-    if (timeSelect && dateStr) {
-        timeSelect.disabled = false;
-    }
-    
-    if (selectedDates[0]) {
-        const dayOfWeek = selectedDates[0].getDay();
-        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-        weekendSurcharge = isWeekend ? 200 : 0;
-        showWeekendNotice(isWeekend);
-        
-        updateBookingSummary();
-    }
-}
+        onChange: (dates, dateStr) => {
+            const timeSelect = document.getElementById('time');
+            if (timeSelect && dateStr) timeSelect.disabled = false;
+            const isWeekend = dates[0] && (dates[0].getDay() === 0 || dates[0].getDay() === 6);
+            weekendSurcharge = isWeekend ? 200 : 0;
+            showWeekendNotice(isWeekend);
+            if (currentStep === 4) updateBookingSummary();
+        }
     });
 }
 
@@ -455,14 +438,13 @@ function initTimeSlots() {
 }
 
 function showWeekendNotice(show) {
-    let weekendSurcharge = 0;
     let notice = document.querySelector('.weekend-notice');
     if (show && !notice) {
         const dateField = document.getElementById('date');
         if (dateField?.parentNode) {
             notice = document.createElement('div');
             notice.className = 'weekend-notice';
-            notice.innerHTML = 'В выходные и праздничные дни наценка +200₽';
+            notice.innerHTML = '💰 В выходные и праздничные дни наценка +200₽';
             dateField.parentNode.appendChild(notice);
         }
     }
@@ -526,33 +508,37 @@ async function handleFormSubmit(e) {
     submitBtn.disabled = true;
     
     try {
-        const response = await fetch('https://script.google.com/macros/s/AKfycbwWIwnLrVRqkuVI4yYiBRcpV5JrCxgxC0sK8iJuRO3dZtA0CvIE-JbSRN6CnXwBPCpcFw/exec', {
+        const response = await fetch('http://localhost:3001/api/bookings', {
             method: 'POST',
-            mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(bookingData)
         });
         
-        const bookings = JSON.parse(localStorage.getItem('hohloma_bookings') || '[]');
-        bookings.push({ ...bookingData, id: Date.now(), createdAt: new Date().toISOString() });
-        localStorage.setItem('hohloma_bookings', JSON.stringify(bookings));
+        const result = await response.json();
         
-        console.log('Запись отправлена:', bookingData);
-        showNotification('Запись сохранена!', 'success');
-        
-        resetForm();
-        
-        setTimeout(() => {
-            const modal = document.getElementById('modal-booking');
-            if (modal) {
-                modal.classList.remove('modal-booking--active');
-                document.body.style.overflow = '';
-            }
-        }, 2000);
-        
+        if (result.success) {
+            const bookings = JSON.parse(localStorage.getItem('hohloma_bookings') || '[]');
+            bookings.push({ ...bookingData, id: Date.now(), createdAt: new Date().toISOString() });
+            localStorage.setItem('hohloma_bookings', JSON.stringify(bookings));
+            
+            console.log('📋 Запись отправлена на сервер:', bookingData);
+            showNotification('✅ Запись сохранена!', 'success');
+            
+            document.getElementById('booking-form').reset();
+            
+            setTimeout(() => {
+                const modal = document.getElementById('modal-booking');
+                if (modal) {
+                    modal.classList.remove('modal-booking--active');
+                    document.body.style.overflow = '';
+                }
+            }, 5000);
+        } else {
+            showNotification('Ошибка при сохранении. Попробуйте позже.', 'error');
+        }
     } catch (error) {
         console.error('Ошибка:', error);
-        showNotification('Ошибка при отправке. Попробуйте позже.', 'error');
+        showNotification('Ошибка соединения с сервером', 'error');
     } finally {
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
@@ -628,12 +614,7 @@ function applyPresetContext() {
 }
 
 function showNotification(message, type) {
-    const modal = document.getElementById('notification-modal');
-    if (!modal) return;
-    const msgEl = modal.querySelector('.modal__message');
-    if (msgEl) msgEl.textContent = message;
-    modal.classList.add('modal--active');
-    setTimeout(() => modal.classList.remove('modal--active'), 5000);
+    alert(message); 
 }
 
 function attachBookingButtons() {
@@ -647,9 +628,13 @@ function attachBookingButtons() {
 function handleBookingClick(e) {
     e.preventDefault();
     const btn = e.currentTarget;
+    const section = btn.getAttribute('data-section') || 'all';
+    
     window.openBookingModal({
         masterId: btn.getAttribute('data-master-id'),
         serviceId: btn.getAttribute('data-service-id'),
-        source: btn.classList.contains('price__book') ? 'price' : btn.classList.contains('team-card__book') ? 'master-card' : 'nav'
+        source: btn.classList.contains('price__book') ? 'price' : 
+                btn.classList.contains('team-card__book') ? 'master-card' : 'nav',
+        section: section
     });
 }

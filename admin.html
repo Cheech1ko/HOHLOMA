@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Админ-панель — Заявки</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            padding: 20px;
+        }
+        h1 {
+            color: #c9a227;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1a1a1a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        th {
+            background: #c9a227;
+            color: #000;
+        }
+        tr:hover {
+            background: #2a2a2a;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        .error {
+            color: #ff4444;
+            text-align: center;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📋 Все заявки</h1>
+    <div id="content" class="loading">Загрузка...</div>
+
+    <script>
+        fetch('/api/admin/bookings')
+            .then(res => {
+                if (!res.ok) throw new Error('Ошибка загрузки');
+                return res.json();
+            })
+            .then(bookings => {
+                const content = document.getElementById('content');
+                if (!bookings.length) {
+                    content.innerHTML = '<div class="loading">Пока нет заявок</div>';
+                    return;
+                }
+
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr><th>ID</th><th>Имя</th><th>Телефон</th><th>Услуга</th><th>Мастер</th><th>Дата/время</th><th>Цена</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+                const tbody = table.querySelector('tbody');
+
+                bookings.forEach(b => {
+                    const row = tbody.insertRow();
+                    row.insertCell(0).textContent = b.id;
+                    row.insertCell(1).textContent = b.name;
+                    row.insertCell(2).textContent = b.phone;
+                    row.insertCell(3).textContent = b.service;
+                    row.insertCell(4).textContent = b.master;
+                    row.insertCell(5).textContent = `${b.date} ${b.time}`;
+                    row.insertCell(6).textContent = `${b.price}₽`;
+                });
+
+                content.innerHTML = '';
+                content.appendChild(table);
+            })
+            .catch(err => {
+                document.getElementById('content').innerHTML = `<div class="error">❌ Ошибка: ${err.message}</div>`;
+                console.error(err);
+            });
+    </script>
+</body>
+</html>

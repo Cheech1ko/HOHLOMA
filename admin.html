@@ -50,7 +50,7 @@
     <div id="content" class="loading">Загрузка...</div>
 
     <script>
-        fetch('/api/admin/bookings')
+        fetch('https://hohloma-backend.onrender.com/api/admin/bookings')
             .then(res => {
                 if (!res.ok) throw new Error('Ошибка загрузки');
                 return res.json();

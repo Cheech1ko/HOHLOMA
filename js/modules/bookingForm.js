@@ -324,10 +324,15 @@ const FullMode = {
             ],
             onChange: async (selectedDates, dateStr) => {
                 if (selectedDates && selectedDates.length === 1 && dateStr && state.masterId && state.masterId !== 'any') {
-                    await loadBusySlots(state.masterId, dateStr);
+
+                    const masterName = MASTERS_DATA[state.masterId]?.name || state.masterId;
+                    console.log('📅 Выбрана дата:', dateStr, 'Мастер:', masterName);
+
+                    await loadBusySlots(masterName, dateStr);
                     const timeSelect = document.getElementById('time');
                     if (timeSelect) timeSelect.disabled = false;
                     await FullMode.refreshTimeSlots();
+
                     const isWeekend = selectedDates[0].getDay() === 0 || selectedDates[0].getDay() === 6;
                     state.weekendSurcharge = isWeekend ? 200 : 0;
                     showWeekendNotice(isWeekend);
@@ -670,7 +675,7 @@ const StepMode = {
                 await loadBusySlots(masterName, dateStr);
                 const timeSelect = document.getElementById('step-time');
                 if (timeSelect) timeSelect.disabled = false;
-                await StepMode.refreshTimeSlots(); // ← ИСПРАВЛЕНО: было FullMode.refreshTimeSlots()
+                await StepMode.refreshTimeSlots(); 
                 const isWeekend = selectedDates[0].getDay() === 0 || selectedDates[0].getDay() === 6;
                 state.weekendSurcharge = isWeekend ? 200 : 0;
                 showWeekendNotice(isWeekend);

@@ -36,7 +36,21 @@ app.get('/api/admin/bookings', async (req, res) => {
 app.post('/api/bookings', async (req, res) => {
     try {
         const booking = req.body;
-        console.log(' Новая заявка:', booking);
+        console.log('Новая заявка:', booking);
+
+        const checkQuery = `
+            SELECT * FROM bookings 
+            WHERE master = $1 AND date = $2 AND time = $3
+        `;
+        const checkResult = await pool.query(checkQuery, [booking.master, booking.date, booking.time]);
+
+        if (checkResult.rows.length > 0) {
+            console.log('Время уже занято:', booking.master, booking.date, booking.time);
+            return res.status(409).json({ 
+                success: false, 
+                error: 'Это время уже занято. Выберите другое время.' 
+            });
+        }
 
         booking.createdAt = new Date().toISOString();
         const result = await saveBooking(booking);

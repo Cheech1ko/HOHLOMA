@@ -45,4 +45,4 @@ async function getAllBookings() {
     return result.rows;
 }
 
-module.exports = { saveBooking, getAllBookings };
+module.exports = { saveBooking, getAllBookings, pool };

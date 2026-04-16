@@ -128,6 +128,22 @@ function getMasterServices(masterId) {
     return services;
 }
 
+function showWeekendNotice(show) {
+    let notice = document.querySelector('.weekend-notice');
+    if (show && !notice) {
+        const dateField = document.getElementById('date') || document.getElementById('step-date');
+        if (dateField?.parentNode) {
+            notice = document.createElement('div');
+            notice.className = 'weekend-notice';
+            notice.innerHTML = '💰 В выходные и праздничные дни наценка +200₽';
+            dateField.parentNode.appendChild(notice);
+        }
+    }
+    if (notice) {
+        notice.style.display = show ? 'block' : 'none';
+    }
+}
+
 function showNotification(message) {
     const modal = document.getElementById('notification-modal');
     if (!modal) return;
@@ -305,7 +321,7 @@ const FullMode = {
                 }
             ],
             onChange: async (selectedDates, dateStr, instance) => {
-                // Проверяем, что выбрана ровно одна дата
+
                 if (selectedDates && selectedDates.length === 1 && dateStr && state.masterId && state.masterId !== 'any') {
                     await loadBusySlots(state.masterId, dateStr);
                     const timeSelect = document.getElementById('time');
@@ -319,12 +335,12 @@ const FullMode = {
                 }
             },
             onReady: function(selectedDates, dateStr, instance) {
-                // Принудительно очищаем выбранную дату при открытии
+
                 instance.clear();
                 input.value = '';
             },
             onOpen: function(selectedDates, dateStr, instance) {
-                // Очищаем при открытии календаря
+
                 instance.clear();
                 input.value = '';
             }
@@ -343,21 +359,29 @@ const FullMode = {
         });
     },
 
-    async refreshTimeSlots() {
-        const select = document.getElementById('time');
-        const date = document.getElementById('date')?.value;
-        if (!select || !date || !state.masterId || state.masterId === 'any') return;
-        await loadBusySlots(state.masterId, date);
-        for (let i = 0; i < select.options.length; i++) {
-            const opt = select.options[i];
-            if (opt.value && state.busySlots.includes(opt.value)) {
-                opt.disabled = true;
-                opt.style.cssText = 'color:#999;text-decoration:line-through';
-            } else if (opt.value) {
-                opt.disabled = false;
-                opt.style.cssText = '';
-            }
+async refreshTimeSlots() {
+    const select = document.getElementById('time');
+    const date = document.getElementById('date')?.value;
+    if (!select || !date || !state.masterId || state.masterId === 'any') return;
+    
+    await loadBusySlots(state.masterId, date);
+    console.log('Занятые слоты:', state.busySlots);
+    
+    select.innerHTML = '<option value="">— Выберите время —</option>';
+    TIME_SLOTS.forEach(slot => {
+        const option = document.createElement('option');
+        option.value = slot;
+        option.textContent = slot;
+        if (state.busySlots.includes(slot)) {
+            option.disabled = true;
+            option.style.cssText = 'color:#999;text-decoration:line-through';
         }
+        select.appendChild(option);
+    });
+    
+    if (state.busySlots.length > 0) {
+        console.log('Заблокированы слоты:', state.busySlots);
+    }
     },
 
     updateSummary() {
@@ -679,21 +703,25 @@ const StepMode = {
         });
     },
 
-    async refreshTimeSlots() {
-        const select = document.getElementById('step-time');
-        const date = document.getElementById('step-date')?.value;
-        if (!select || !date || !state.masterId) return;
-        await loadBusySlots(state.masterId, date);
-        for (let i = 0; i < select.options.length; i++) {
-            const opt = select.options[i];
-            if (opt.value && state.busySlots.includes(opt.value)) {
-                opt.disabled = true;
-                opt.style.cssText = 'color:#999;text-decoration:line-through';
-            } else if (opt.value) {
-                opt.disabled = false;
-                opt.style.cssText = '';
-            }
+async refreshTimeSlots() {
+    const select = document.getElementById('step-time');
+    const date = document.getElementById('step-date')?.value;
+    if (!select || !date || !state.masterId) return;
+    
+    await loadBusySlots(state.masterId, date);
+    console.log('Занятые слоты (step):', state.busySlots);
+    
+    select.innerHTML = '<option value="">— Выберите время —</option>';
+    TIME_SLOTS.forEach(slot => {
+        const option = document.createElement('option');
+        option.value = slot;
+        option.textContent = slot;
+        if (state.busySlots.includes(slot)) {
+            option.disabled = true;
+            option.style.cssText = 'color:#999;text-decoration:line-through';
         }
+        select.appendChild(option);
+    });
     },
 
     updateSummary() {

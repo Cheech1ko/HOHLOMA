@@ -105,8 +105,10 @@ async function loadBusySlots(masterId, date) {
     try {
         const res = await fetch(`${API_URL}/bookings/check?master=${encodeURIComponent(masterId)}&date=${encodeURIComponent(date)}`);
         const data = await res.json();
-        state.busySlots = data.times || [];
+        state.busySlots = Array.isArray(data.times) ? data.times : [];
+        console.log(` Загружены занятые слоты для ${masterId} на ${date}:`, state.busySlots);
     } catch (error) {
+        console.error(' Ошибка загрузки слотов:', error);
         state.busySlots = [];
     }
 }
@@ -320,14 +322,11 @@ const FullMode = {
                     return date < today;
                 }
             ],
-            onChange: async (selectedDates, dateStr, instance) => {
-
+            onChange: async (selectedDates, dateStr) => {
                 if (selectedDates && selectedDates.length === 1 && dateStr && state.masterId && state.masterId !== 'any') {
                     await loadBusySlots(state.masterId, dateStr);
                     const timeSelect = document.getElementById('time');
-                    if (timeSelect) {
-                        timeSelect.disabled = false;
-                    }
+                    if (timeSelect) timeSelect.disabled = false;
                     await FullMode.refreshTimeSlots();
                     const isWeekend = selectedDates[0].getDay() === 0 || selectedDates[0].getDay() === 6;
                     state.weekendSurcharge = isWeekend ? 200 : 0;
@@ -364,8 +363,9 @@ async refreshTimeSlots() {
     const date = document.getElementById('date')?.value;
     if (!select || !date || !state.masterId || state.masterId === 'any') return;
     
+    console.log(' Запрашиваем занятые слоты для:', state.masterId, date);
     await loadBusySlots(state.masterId, date);
-    console.log('Занятые слоты:', state.busySlots);
+    console.log(' Занятые слоты после загрузки:', state.busySlots);
     
     select.innerHTML = '<option value="">— Выберите время —</option>';
     TIME_SLOTS.forEach(slot => {
@@ -378,10 +378,6 @@ async refreshTimeSlots() {
         }
         select.appendChild(option);
     });
-    
-    if (state.busySlots.length > 0) {
-        console.log('Заблокированы слоты:', state.busySlots);
-    }
     },
 
     updateSummary() {

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { saveBooking, getAllBookings, pool } = require('./database');
 
 const app = express();
@@ -9,7 +10,7 @@ app.use(cors({
     origin: ['http://127.0.0.1:5500', 'http://localhost:5500', 'https://cheech1ko.github.io']
 }));
 app.use(express.json());
-app.use(express.static('.'));
+app.use(express.static(path.join(__dirname, '..')));
 
 
 app.get('/api/admin/bookings', async (req, res) => {

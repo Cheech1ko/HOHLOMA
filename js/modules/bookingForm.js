@@ -363,9 +363,10 @@ async refreshTimeSlots() {
     const date = document.getElementById('date')?.value;
     if (!select || !date || !state.masterId || state.masterId === 'any') return;
     
-    console.log(' Запрашиваем занятые слоты для:', state.masterId, date);
-    await loadBusySlots(state.masterId, date);
-    console.log(' Занятые слоты после загрузки:', state.busySlots);
+    const masterName = MASTERS_DATA[state.masterId]?.name || state.masterId;
+    console.log('Запрашиваем занятые слоты для мастера:', masterName, date);
+    await loadBusySlots(masterName, date);
+    console.log('Занятые слоты после загрузки:', state.busySlots);
     
     select.innerHTML = '<option value="">— Выберите время —</option>';
     TIME_SLOTS.forEach(slot => {
@@ -663,14 +664,13 @@ const StepMode = {
         dateFormat: 'd.m.Y',
         defaultDate: null,
         disable: [date => date < today],
-        onChange: async (selectedDates, dateStr, instance) => {
-            if (selectedDates && selectedDates.length === 1 && dateStr && state.masterId) {
-                await loadBusySlots(state.masterId, dateStr);
-                const timeSelect = document.getElementById('step-time');
-                if (timeSelect) {
-                    timeSelect.disabled = false;
-                }
-                await StepMode.refreshTimeSlots();
+        onChange: async (selectedDates, dateStr) => {
+            if (selectedDates && selectedDates.length === 1 && dateStr && state.masterId && state.masterId !== 'any') {
+                const masterName = MASTERS_DATA[state.masterId]?.name || state.masterId;
+                await loadBusySlots(masterName, dateStr);
+                const timeSelect = document.getElementById('time');
+                if (timeSelect) timeSelect.disabled = false;
+                await FullMode.refreshTimeSlots();
                 const isWeekend = selectedDates[0].getDay() === 0 || selectedDates[0].getDay() === 6;
                 state.weekendSurcharge = isWeekend ? 200 : 0;
                 showWeekendNotice(isWeekend);
@@ -704,8 +704,8 @@ async refreshTimeSlots() {
     const date = document.getElementById('step-date')?.value;
     if (!select || !date || !state.masterId) return;
     
-    await loadBusySlots(state.masterId, date);
-    console.log('Занятые слоты (step):', state.busySlots);
+    const masterName = MASTERS_DATA[state.masterId]?.name || state.masterId;
+    await loadBusySlots(masterName, date);
     
     select.innerHTML = '<option value="">— Выберите время —</option>';
     TIME_SLOTS.forEach(slot => {

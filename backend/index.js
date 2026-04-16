@@ -4,6 +4,13 @@ const { saveBooking, getAllBookings } = require('./database');
 
 const app = express();
 const port = process.env.PORT || 3001;
+const existing = await pool.query(
+    `SELECT * FROM bookings WHERE master = $1 AND date = $2 AND time = $3`,
+    [booking.master, booking.date, booking.time]
+);
+if (existing.rows.length > 0) {
+    return res.status(409).json({ success: false, error: 'Это время уже занято' });
+}
 
 app.use(cors({
     origin: ['http://127.0.0.1:5500', 'http://localhost:5500', 'https://cheech1ko.github.io']

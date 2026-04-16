@@ -788,19 +788,125 @@
     <script type="module" src="js/modules/mobileMenu.js"></script>
     <script type="module" src="js/modules/forms.js"></script>
     
-    <!-- Главный файл тоже type="module" -->
+
     <script type="module" src="js/main.js"></script>
     
-    <div class="modal-booking" id="modal-booking">
+<div class="modal-booking" id="modal-booking">
     <div class="modal-booking__overlay"></div>
     <div class="modal-booking__container">
-        <div class="modal-booking__header">
-            <h3 class="modal-booking__title">Записаться онлайн</h3>
-            <button class="modal-booking__close" id="modal-booking-close">&times;</button>
-        </div>
         <div class="modal-booking__body">
-            <form id="booking-form" class="booking-form">
-            </form>
+            <div class="booking-header">
+                <h2 class="booking-header__title">ХОХЛОМА TATTOO&BARBER</h2>
+                <div class="booking-header__address">
+                    <span class="booking-header__address-text">Московская улица, 69</span>
+                    <a href="#" class="booking-header__how-to-get">Как проехать?</a>
+                </div>
+            </div>
+
+            <!-- Контент модалки -->
+            <div id="modal-content">
+                <div id="start-screen">
+                    <h3 class="booking-start__title">Онлайн-запись</h3>
+                    <div class="booking-start__subtitle">Выберите, с чего вы хотите начать</div>
+                    
+                    <div class="booking-options">
+                        <button class="booking-option-btn" data-start="service">
+                            <span class="booking-option-btn__text">Выбрать услугу</span>
+                            <span class="booking-option-btn__arrow">›</span>
+                        </button>
+                        <button class="booking-option-btn" data-start="master">
+                            <span class="booking-option-btn__text">Выбрать мастера</span>
+                            <span class="booking-option-btn__arrow">›</span>
+                        </button>
+                        <button class="booking-option-btn" data-start="any-master">
+                            <span class="booking-option-btn__text">Любой мастер</span>
+                            <span class="booking-option-btn__arrow">›</span>
+                        </button>
+                    </div>
+
+                    <div class="booking-footer">
+                        <button class="booking-footer__btn" id="start-screen-next">Далее</button>
+                        <div class="booking-footer__powered">Онлайн-запись</div>
+                    </div>
+                </div>
+
+                <!-- Экран выбора услуги (появляется после клика) -->
+                <div id="service-screen" style="display: none;">
+                    <div class="booking-screen-header">
+                        <button class="booking-back-btn" id="back-from-service">← Назад</button>
+                        <h3>Выберите услугу</h3>
+                    </div>
+                    <div class="booking-services__grid" id="services-grid"></div>
+                    <div class="booking-footer">
+                        <button class="booking-footer__btn" id="service-screen-next">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Экран выбора мастера -->
+                <div id="master-screen" style="display: none;">
+                    <div class="booking-screen-header">
+                        <button class="booking-back-btn" id="back-from-master">← Назад</button>
+                        <h3>Выберите мастера</h3>
+                    </div>
+                    <div class="booking-masters__grid" id="masters-grid"></div>
+                    <div class="booking-footer">
+                        <button class="booking-footer__btn" id="master-screen-next">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Экран выбора времени -->
+                <div id="time-screen" style="display: none;">
+                    <div class="booking-screen-header">
+                        <button class="booking-back-btn" id="back-from-time">← Назад</button>
+                        <h3>Выберите дату и время</h3>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Дата</label>
+                            <input type="text" id="date" class="form-input" placeholder="ДД.ММ.ГГГГ" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Время</label>
+                            <select id="time" class="form-select" disabled>
+                                <option value="">— Сначала выберите дату —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="booking-footer">
+                        <button class="booking-footer__btn" id="time-screen-next">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Экран с данными клиента -->
+                <div id="client-screen" style="display: none;">
+                    <div class="booking-screen-header">
+                        <button class="booking-back-btn" id="back-from-client">← Назад</button>
+                        <h3>Ваши данные</h3>
+                    </div>
+                    <div class="booking-summary" id="booking-summary"></div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Имя</label>
+                            <input type="text" id="name" class="form-input" placeholder="Имя">
+                        </div>
+                        <div class="form-group">
+                            <label>Телефон</label>
+                            <input type="tel" id="phone" class="form-input" placeholder="+7 (___) ___-__-__">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Комментарий</label>
+                        <textarea id="comment" class="form-textarea" rows="3"></textarea>
+                    </div>
+                    <div class="form-group form-group--policy">
+                        <input type="checkbox" id="policy" checked>
+                        <label>Я согласен на обработку персональных данных</label>
+                    </div>
+                    <div class="booking-footer">
+                        <button class="booking-footer__btn" id="submit-booking">Записаться</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { saveBooking, getAllBookings } = require('./database');
+const { saveBooking, getAllBookings, pool } = require('./database');
 
 const app = express();
 const port = process.env.PORT || 3001;

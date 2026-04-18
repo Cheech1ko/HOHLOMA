@@ -60,9 +60,9 @@ app.get('/api/admin/bookings', async (req, res) => {
             query += ` AND status = $${params.length + 1}`;
             params.push(status);
         }
-        if (master) {
-            query += ` AND master = $${params.length + 1}`;
-            params.push(master);
+        if (master && master !== '') {
+            query += ` AND master ILIKE $${params.length + 1}`;
+            params.push(`%${master}%`);
         }
         if (from) {
             query += ` AND date >= $${params.length + 1}`;

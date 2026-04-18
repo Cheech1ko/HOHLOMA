@@ -152,6 +152,7 @@
         }
         
         async function loadBookings() {
+            console.log('loadBookings called')
             const status = document.getElementById('filter-status').value;
             const master = document.getElementById('filter-master').value;
             const fromDate = document.getElementById('filter-from').value;
@@ -272,14 +273,19 @@
             });
         }
         
-        document.getElementById('apply-filters').addEventListener('click', () => loadBookings());
-        document.getElementById('reset-filters').addEventListener('click', () => {
-            document.getElementById('filter-status').value = '';
-            document.getElementById('filter-master').value = '';
-            document.getElementById('filter-from').value = '';
-            document.getElementById('filter-to').value = '';
-            loadBookings();
-        });
+            document.getElementById('apply-filters').addEventListener('click', function() {
+                console.log('Apply filters clicked');
+                loadBookings();
+            });
+
+            document.getElementById('reset-filters').addEventListener('click', function() {
+                console.log('Reset filters clicked');
+                document.getElementById('filter-status').value = '';
+                document.getElementById('filter-master').value = '';
+                document.getElementById('filter-from').value = '';
+                document.getElementById('filter-to').value = '';
+                loadBookings();
+});
         
         loadMasters();
         loadBookings();

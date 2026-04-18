@@ -22,10 +22,18 @@ async function initDB() {
         )
     `;
     await pool.query(query);
-    console.log(' База данных PostgreSQL готова');
+    
+    try {
+        await pool.query(`ALTER TABLE bookings ADD COLUMN status TEXT DEFAULT 'new'`);
+        console.log('✅ Колонка status добавлена');
+    } catch (err) {
+        if (!err.message.includes('duplicate column')) {
+            console.error('Ошибка добавления status:', err.message);
+        }
+    }
+    
+    console.log('✅ База данных PostgreSQL готова');
 }
-
-initDB();
 
 async function saveBooking(booking) {
     const { name, phone, service, master, masterLevel, date, time, price, comment, createdAt } = booking;

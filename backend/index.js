@@ -24,16 +24,63 @@ app.get('/api/admin/bookings', async (req, res) => {
 });
 
 
-app.get('/api/bookings/check', async (req, res) => {
+app.patch('/api/admin/bookings/:id', async (req, res) => {
     try {
-        const { master, date } = req.query;
-        const result = await pool.query(
-            `SELECT time FROM bookings WHERE master = $1 AND date = $2`,
-            [master, date]
+        const { id } = req.params;
+        const { status } = req.body;
+        await pool.query(
+            `UPDATE bookings SET status = $1, "updatedAt" = NOW() WHERE id = $2`,
+            [status, id]
         );
-        res.json({ times: result.rows.map(row => row.time) });
+        res.json({ success: true });
     } catch (err) {
-        console.error('Ошибка проверки:', err);
+        console.error(' Ошибка обновления:', err);
+        res.status(500).json({ error: 'Ошибка базы данных' });
+    }
+});
+
+app.delete('/api/admin/bookings/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query(`DELETE FROM bookings WHERE id = $1`, [id]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(' Ошибка удаления:', err);
+        res.status(500).json({ error: 'Ошибка базы данных' });
+    }
+});
+
+app.get('/api/admin/bookings', async (req, res) => {
+    try {
+        const { status, master, from, to, sort, order } = req.query;
+        let query = `SELECT * FROM bookings WHERE 1=1`;
+        const params = [];
+        
+        if (status) {
+            query += ` AND status = $${params.length + 1}`;
+            params.push(status);
+        }
+        if (master) {
+            query += ` AND master = $${params.length + 1}`;
+            params.push(master);
+        }
+        if (from) {
+            query += ` AND date >= $${params.length + 1}`;
+            params.push(from);
+        }
+        if (to) {
+            query += ` AND date <= $${params.length + 1}`;
+            params.push(to);
+        }
+        
+        const sortField = sort === 'date' ? 'date' : 'id';
+        const sortOrder = order === 'asc' ? 'ASC' : 'DESC';
+        query += ` ORDER BY ${sortField} ${sortOrder}`;
+        
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(' Ошибка получения:', err);
         res.status(500).json({ error: 'Ошибка базы данных' });
     }
 });

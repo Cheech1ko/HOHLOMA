@@ -4,91 +4,285 @@
     <meta charset="UTF-8">
     <title>Админ-панель — Заявки</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #0a0a0a;
             color: #fff;
             padding: 20px;
         }
-        h1 {
-            color: #c9a227;
-            text-align: center;
+        h1 { color: #c9a227; margin-bottom: 20px; }
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            align-items: flex-end;
         }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .filter-group label {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+        select, input {
+            padding: 8px 12px;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            color: #fff;
+            border-radius: 6px;
+            min-width: 150px;
+        }
+        button {
+            padding: 8px 16px;
+            background: #c9a227;
+            border: none;
+            color: #0a0a0a;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:hover { background: #dbb957; }
         table {
             width: 100%;
             border-collapse: collapse;
             background: #1a1a1a;
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x: auto;
+            display: block;
         }
         th, td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #2a2a2a;
         }
         th {
             background: #c9a227;
-            color: #000;
+            color: #0a0a0a;
+            cursor: pointer;
         }
-        tr:hover {
-            background: #2a2a2a;
+        th:hover { background: #dbb957; }
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
         }
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #888;
+        .status-new { background: #2196f3; color: #fff; }
+        .status-confirmed { background: #4caf50; color: #fff; }
+        .status-completed { background: #9c27b0; color: #fff; }
+        .status-cancelled { background: #f44336; color: #fff; }
+        .actions button {
+            padding: 4px 8px;
+            margin: 0 2px;
+            font-size: 0.7rem;
         }
-        .error {
-            color: #ff4444;
-            text-align: center;
-            padding: 40px;
+        .delete-btn { background: #f44336; color: #fff; }
+        .delete-btn:hover { background: #d32f2f; }
+        .loading { text-align: center; padding: 40px; color: #888; }
+        @media (max-width: 768px) {
+            .filters { flex-direction: column; align-items: stretch; }
+            table { font-size: 0.8rem; }
+            th, td { padding: 8px; }
         }
     </style>
 </head>
 <body>
-    <h1>📋 Все заявки</h1>
-    <div id="content" class="loading">Загрузка...</div>
+    <h1>📋 Админ-панель</h1>
+    
+    <div class="filters">
+        <div class="filter-group">
+            <label>Мастер</label>
+            <select id="filter-master">
+                <option value="">Все</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Статус</label>
+            <select id="filter-status">
+                <option value="">Все</option>
+                <option value="new">Новая</option>
+                <option value="confirmed">Подтверждена</option>
+                <option value="completed">Выполнена</option>
+                <option value="cancelled">Отменена</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Дата от</label>
+            <input type="date" id="filter-from">
+        </div>
+        <div class="filter-group">
+            <label>Дата до</label>
+            <input type="date" id="filter-to">
+        </div>
+        <div class="filter-group">
+            <button id="apply-filters">Применить</button>
+        </div>
+        <div class="filter-group">
+            <button id="reset-filters">Сбросить</button>
+        </div>
+    </div>
+    
+    <div id="table-container">
+        <div class="loading">Загрузка...</div>
+    </div>
 
     <script>
-        fetch('https://hohloma-backend.onrender.com/api/admin/bookings')
-            .then(res => {
-                if (!res.ok) throw new Error('Ошибка загрузки');
-                return res.json();
-            })
-            .then(bookings => {
-                const content = document.getElementById('content');
-                if (!bookings.length) {
-                    content.innerHTML = '<div class="loading">Пока нет заявок</div>';
-                    return;
-                }
-
-                const table = document.createElement('table');
-                table.innerHTML = `
-                    <thead>
-                        <tr><th>ID</th><th>Имя</th><th>Телефон</th><th>Услуга</th><th>Мастер</th><th>Дата/время</th><th>Цена</th></tr>
-                    </thead>
-                    <tbody></tbody>
-                `;
-                const tbody = table.querySelector('tbody');
-
-                bookings.forEach(b => {
-                    const row = tbody.insertRow();
-                    row.insertCell(0).textContent = b.id;
-                    row.insertCell(1).textContent = b.name;
-                    row.insertCell(2).textContent = b.phone;
-                    row.insertCell(3).textContent = b.service;
-                    row.insertCell(4).textContent = b.master;
-                    row.insertCell(5).textContent = `${b.date} ${b.time}`;
-                    row.insertCell(6).textContent = `${b.price}₽`;
-                });
-
-                content.innerHTML = '';
-                content.appendChild(table);
-            })
-            .catch(err => {
-                document.getElementById('content').innerHTML = `<div class="error">❌ Ошибка: ${err.message}</div>`;
-                console.error(err);
+        const API_URL = 'https://hohloma-backend.onrender.com/api/admin/bookings';
+        let currentBookings = [];
+        let currentSort = { field: 'id', order: 'desc' };
+        
+        async function loadMasters() {
+            const res = await fetch(API_URL);
+            const bookings = await res.json();
+            const masters = [...new Set(bookings.map(b => b.master))];
+            const select = document.getElementById('filter-master');
+            masters.forEach(m => {
+                const option = document.createElement('option');
+                option.value = m;
+                option.textContent = m;
+                select.appendChild(option);
             });
+        }
+        
+        async function loadBookings() {
+            const status = document.getElementById('filter-status').value;
+            const master = document.getElementById('filter-master').value;
+            const fromDate = document.getElementById('filter-from').value;
+            const toDate = document.getElementById('filter-to').value;
+            
+            let url = API_URL;
+            const params = [];
+            if (status) params.push(`status=${status}`);
+            if (master) params.push(`master=${encodeURIComponent(master)}`);
+            if (fromDate) params.push(`from=${fromDate}`);
+            if (toDate) params.push(`to=${toDate}`);
+            if (currentSort.field) params.push(`sort=${currentSort.field}&order=${currentSort.order}`);
+            if (params.length) url += '?' + params.join('&');
+            
+            const res = await fetch(url);
+            currentBookings = await res.json();
+            renderTable();
+        }
+        
+        function renderTable() {
+            const container = document.getElementById('table-container');
+            if (!currentBookings.length) {
+                container.innerHTML = '<div class="loading">Нет заявок</div>';
+                return;
+            }
+            
+            const statusLabels = {
+                new: 'Новая', confirmed: 'Подтверждена', completed: 'Выполнена', cancelled: 'Отменена'
+            };
+            
+            let html = `
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-sort="id">ID</th>
+                                <th data-sort="name">Имя</th>
+                                <th data-sort="phone">Телефон</th>
+                                <th data-sort="service">Услуга</th>
+                                <th data-sort="master">Мастер</th>
+                                <th data-sort="date">Дата/время</th>
+                                <th data-sort="price">Цена</th>
+                                <th data-sort="status">Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            currentBookings.forEach(b => {
+                html += `
+                    <tr data-id="${b.id}">
+                        <td>${b.id}</td>
+                        <td>${escapeHtml(b.name)}</td>
+                        <td>${escapeHtml(b.phone)}</td>
+                        <td>${escapeHtml(b.service)}</td>
+                        <td>${escapeHtml(b.master)}</td>
+                        <td>${b.date || ''} ${b.time || ''}</td>
+                        <td>${b.price}₽</td>
+                        <td>
+                            <select class="status-select" data-id="${b.id}" data-status="${b.status || 'new'}">
+                                <option value="new" ${b.status === 'new' ? 'selected' : ''}>Новая</option>
+                                <option value="confirmed" ${b.status === 'confirmed' ? 'selected' : ''}>Подтверждена</option>
+                                <option value="completed" ${b.status === 'completed' ? 'selected' : ''}>Выполнена</option>
+                                <option value="cancelled" ${b.status === 'cancelled' ? 'selected' : ''}>Отменена</option>
+                            </select>
+                        </td>
+                        <td class="actions">
+                            <button class="delete-btn" data-id="${b.id}">🗑 Удалить</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+            
+            document.querySelectorAll('.status-select').forEach(select => {
+                select.addEventListener('change', async (e) => {
+                    const id = select.dataset.id;
+                    const newStatus = select.value;
+                    await fetch(`${API_URL}/${id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+                    loadBookings();
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = btn.dataset.id;
+                    if (confirm('Удалить заявку?')) {
+                        await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                        loadBookings();
+                    }
+                });
+            });
+            
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => {
+                    const field = th.dataset.sort;
+                    currentSort.order = (currentSort.field === field && currentSort.order === 'desc') ? 'asc' : 'desc';
+                    currentSort.field = field;
+                    loadBookings();
+                });
+            });
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        document.getElementById('apply-filters').addEventListener('click', () => loadBookings());
+        document.getElementById('reset-filters').addEventListener('click', () => {
+            document.getElementById('filter-status').value = '';
+            document.getElementById('filter-master').value = '';
+            document.getElementById('filter-from').value = '';
+            document.getElementById('filter-to').value = '';
+            loadBookings();
+        });
+        
+        loadMasters();
+        loadBookings();
     </script>
 </body>
 </html>

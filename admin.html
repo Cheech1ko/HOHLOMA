@@ -152,26 +152,47 @@
         }
         
         async function loadBookings() {
-            console.log('loadBookings called')
-            console.log('Request URL:', url);
-            const status = document.getElementById('filter-status').value;
-            const master = document.getElementById('filter-master').value;
-            const fromDate = document.getElementById('filter-from').value;
-            const toDate = document.getElementById('filter-to').value;
-            
-            let url = API_URL;
-            const params = [];
-            if (status) params.push(`status=${status}`);
-            if (master) params.push(`master=${encodeURIComponent(master)}`);
-            if (fromDate) params.push(`from=${fromDate}`);
-            if (toDate) params.push(`to=${toDate}`);
-            if (currentSort.field) params.push(`sort=${currentSort.field}&order=${currentSort.order}`);
-            if (params.length) url += '?' + params.join('&');
-            
-            const res = await fetch(url);
-            currentBookings = await res.json();
-            renderTable();
-        }
+    console.log('loadBookings called');
+    
+    const status = document.getElementById('filter-status').value;
+    const master = document.getElementById('filter-master').value;
+    const fromDate = document.getElementById('filter-from').value;
+    const toDate = document.getElementById('filter-to').value;
+    
+    let url = API_URL;
+    const params = [];
+    
+    if (status && status !== '') {
+        params.push(`status=${encodeURIComponent(status)}`);
+    }
+    if (master && master !== '') {
+        params.push(`master=${encodeURIComponent(master)}`);
+    }
+    if (fromDate && fromDate !== '') {
+        params.push(`from=${fromDate}`);
+    }
+    if (toDate && toDate !== '') {
+        params.push(`to=${toDate}`);
+    }
+    if (currentSort.field) {
+        params.push(`sort=${currentSort.field}&order=${currentSort.order}`);
+    }
+    
+    if (params.length > 0) {
+        url += '?' + params.join('&');
+    }
+    
+    console.log('Request URL:', url);
+    
+    try {
+        const res = await fetch(url);
+        currentBookings = await res.json();
+        renderTable();
+    } catch (err) {
+        console.error('Ошибка загрузки:', err);
+        document.getElementById('table-container').innerHTML = '<div class="loading">Ошибка загрузки</div>';
+    }
+}
         
         function renderTable() {
             const container = document.getElementById('table-container');

@@ -4,21 +4,27 @@ let state = {
     serviceId: null,
     masterId: null,
     weekendSurcharge: 0,
-    busySlots: [],
+    busySlots: new Set(),
+    selectedDate: null,
+    selectedTime: null,
+    currentMonth: new Date(),
     mode: 'full',
     context: { presetMasterId: null, presetServiceId: null, section: 'all', source: 'nav' }
 };
 
 const API_URL = 'https://hohloma-backend.onrender.com/api';
-const TIME_SLOTS = ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
+const TIME_SLOTS = [];
+for (let hour = 10; hour <= 20; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+        if (hour === 20 && minute > 0) continue;
+        TIME_SLOTS.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+    }
+}
 
 const mastersByService = {
-    // Тату
     'tattoo-individual': ['daniil-tattoo', 'anastasia-tattoo', 'yuri-tattoo'],
     'tattoo-catalog': ['daniil-tattoo', 'anastasia-tattoo', 'yuri-tattoo'],
     'tattoo-cover': ['yuri-tattoo', 'daniil-tattoo'],
-    
-    // Пирсинг
     'piercing-ear': ['victoria-piercing', 'alexey-piercing'],
     'piercing-nose': ['victoria-piercing', 'alexey-piercing'],
     'piercing-lip': ['victoria-piercing'],
@@ -26,21 +32,15 @@ const mastersByService = {
     'piercing-tongue': ['victoria-piercing'],
     'piercing-navel': ['victoria-piercing'],
     'piercing-intimate': ['victoria-piercing'],
-    
-    // Массаж
     'massage-classic': ['alexey-massage'],
     'massage-sport': ['alexey-massage'],
     'massage-anticellulite': ['alexey-massage'],
-    
-    // Барбершоп (базовые)
     'barber-haircut-men': ['vladimir-barber', 'kirill-barber', 'evgeniy-barber', 'maxim-barber', 'arianna-barber'],
     'barber-haircut-kids': ['vladimir-barber', 'kirill-barber', 'evgeniy-barber'],
     'barber-beard-modeling': ['vladimir-barber', 'kirill-barber', 'evgeniy-barber'],
     'barber-beard-care': ['vladimir-barber', 'kirill-barber', 'evgeniy-barber'],
     'barber-shave-classic': ['vladimir-barber', 'kirill-barber', 'arianna-barber'],
     'barber-shave-razor': ['vladimir-barber', 'kirill-barber', 'arianna-barber'],
-    
-    // Барбершоп (дополнительные)
     'barber-haircut-beard': ['vladimir-barber', 'kirill-barber', 'evgeniy-barber', 'maxim-barber', 'arianna-barber'],
     'barber-haircut-machine': ['vladimir-barber', 'kirill-barber', 'evgeniy-barber', 'maxim-barber', 'arianna-barber'],
     'barber-shave-bald': ['vladimir-barber', 'kirill-barber', 'evgeniy-barber'],
@@ -101,15 +101,29 @@ function getTotalPrice() {
     return getServicePrice(state.serviceId) + getMasterSurcharge(state.masterId) + state.weekendSurcharge;
 }
 
+function getBlockedSlots(busyTimes) {
+    const blocked = new Set();
+    busyTimes.forEach(time => {
+        const hour = parseInt(time.split(':')[0]);
+        
+        for (let minute = 0; minute < 60; minute += 15) {
+            const slot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            blocked.add(slot);
+        }
+    });
+    return blocked;
+}
+
 async function loadBusySlots(masterId, date) {
     try {
         const res = await fetch(`${API_URL}/bookings/check?master=${encodeURIComponent(masterId)}&date=${encodeURIComponent(date)}`);
         const data = await res.json();
-        state.busySlots = Array.isArray(data.times) ? data.times : [];
-        console.log(` Загружены занятые слоты для ${masterId} на ${date}:`, state.busySlots);
+        const rawSlots = Array.isArray(data.times) ? data.times : [];
+        state.busySlots = getBlockedSlots(rawSlots);
+        console.log(`📅 Загружены занятые слоты для ${masterId} на ${date}:`, state.busySlots);
     } catch (error) {
-        console.error(' Ошибка загрузки слотов:', error);
-        state.busySlots = [];
+        console.error('❌ Ошибка загрузки слотов:', error);
+        state.busySlots = new Set();
     }
 }
 
@@ -130,20 +144,52 @@ function getMasterServices(masterId) {
     return services;
 }
 
+function formatDate(date) {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
+}
+
+function generateMonthDays(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    let startOffset = firstDay.getDay() - 1;
+    if (startOffset === -1) startOffset = 6;
+    
+    const days = [];
+    
+    for (let i = 0; i < startOffset; i++) {
+        days.push({ date: null, isCurrentMonth: false, isEmpty: true });
+    }
+    
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+        days.push({ date: new Date(year, month, i), isCurrentMonth: true, isEmpty: false });
+    }
+    
+    const remaining = 42 - days.length;
+    for (let i = 0; i < remaining; i++) {
+        days.push({ date: null, isCurrentMonth: false, isEmpty: true });
+    }
+    
+    return days;
+}
+
 function showWeekendNotice(show) {
     let notice = document.querySelector('.weekend-notice');
     if (show && !notice) {
-        const dateField = document.getElementById('date') || document.getElementById('step-date');
-        if (dateField?.parentNode) {
+        const slotsGrid = document.querySelector('.time-calendar__slots');
+        if (slotsGrid?.parentNode) {
             notice = document.createElement('div');
             notice.className = 'weekend-notice';
             notice.innerHTML = '💰 В выходные и праздничные дни наценка +200₽';
-            dateField.parentNode.appendChild(notice);
+            slotsGrid.parentNode.insertBefore(notice, slotsGrid.nextSibling);
         }
     }
-    if (notice) {
-        notice.style.display = show ? 'block' : 'none';
-    }
+    if (notice) notice.style.display = show ? 'block' : 'none';
 }
 
 function showNotification(message) {
@@ -154,6 +200,8 @@ function showNotification(message) {
     modal.classList.add('modal--active');
     setTimeout(() => modal.classList.remove('modal--active'), 5000);
 }
+
+const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 
 const Templates = {
     full: `
@@ -199,9 +247,17 @@ const Templates = {
                 <button class="booking-back-btn" data-back="start">← Назад</button>
                 <h3>Выберите дату и время</h3>
             </div>
-            <div class="form-row">
-                <div class="form-group"><label>Дата</label><input type="text" id="date" class="form-input" placeholder="ДД.ММ.ГГГГ" readonly></div>
-                <div class="form-group"><label>Время</label><select id="time" class="form-select" disabled><option value="">— Выберите время —</option></select></div>
+            <div class="time-calendar">
+                <div class="time-calendar__header">
+                    <button class="time-calendar__prev" id="full-calendar-prev">‹</button>
+                    <div class="time-calendar__month" id="full-calendar-month">Апрель 2026</div>
+                    <button class="time-calendar__next" id="full-calendar-next">›</button>
+                </div>
+                <div class="time-calendar__weekdays">
+                    <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+                </div>
+                <div class="time-calendar__days" id="full-days-grid"></div>
+                <div class="time-calendar__slots" id="full-slots-grid"></div>
             </div>
             <div class="booking-footer"><button class="booking-footer__btn" id="time-next">Далее</button></div>
         </div>
@@ -230,7 +286,25 @@ const Templates = {
         </div>
         <div class="booking-step" data-step="1"><h3>Выберите услугу</h3><div class="booking-services__grid" id="step-services-grid"></div><div class="booking-step__actions"><button class="btn btn--primary btn-next" data-next="2">Далее</button></div></div>
         <div class="booking-step" data-step="2" style="display:none;"><h3>Выберите мастера</h3><div class="booking-masters__grid" id="step-masters-grid"></div><div class="booking-step__actions"><button class="btn btn--outline btn-prev" data-prev="1">Назад</button><button class="btn btn--primary btn-next" data-next="3">Далее</button></div></div>
-        <div class="booking-step" data-step="3" style="display:none;"><h3>Выберите дату и время</h3><div class="form-row"><div class="form-group"><label>Дата</label><input type="text" id="step-date" class="form-input" placeholder="ДД.ММ.ГГГГ" readonly></div><div class="form-group"><label>Время</label><select id="step-time" class="form-select" disabled><option value="">— Выберите время —</option></select></div></div><div class="booking-step__actions"><button class="btn btn--outline btn-prev" data-prev="2">Назад</button><button class="btn btn--primary btn-next" data-next="4">Далее</button></div></div>
+        <div class="booking-step" data-step="3" style="display:none;">
+            <h3>Выберите дату и время</h3>
+            <div class="time-calendar">
+                <div class="time-calendar__header">
+                    <button class="time-calendar__prev" id="step-calendar-prev">‹</button>
+                    <div class="time-calendar__month" id="step-calendar-month">Апрель 2026</div>
+                    <button class="time-calendar__next" id="step-calendar-next">›</button>
+                </div>
+                <div class="time-calendar__weekdays">
+                    <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+                </div>
+                <div class="time-calendar__days" id="step-days-grid"></div>
+                <div class="time-calendar__slots" id="step-slots-grid"></div>
+            </div>
+            <div class="booking-step__actions">
+                <button class="btn btn--outline btn-prev" data-prev="2">Назад</button>
+                <button class="btn btn--primary" id="step-time-next">Далее</button>
+            </div>
+        </div>
         <div class="booking-step" data-step="4" style="display:none;"><h3>Ваши данные</h3><div class="booking-summary" id="step-summary"></div><div class="form-row"><div class="form-group"><label>Имя</label><input type="text" id="step-name" class="form-input" placeholder="Имя"></div><div class="form-group"><label>Телефон</label><input type="tel" id="step-phone" class="form-input" placeholder="+7 (___) ___-__-__"></div></div><div class="form-group"><label>Комментарий</label><textarea id="step-comment" class="form-textarea" rows="3"></textarea></div><div class="form-group--policy"><input type="checkbox" id="step-policy" checked><label>Я согласен на обработку персональных данных</label></div><div class="booking-step__actions"><button class="btn btn--outline btn-prev" data-prev="3">Назад</button><button class="btn btn--primary" id="step-submit">Записаться</button></div></div>
     `
 };
@@ -282,9 +356,7 @@ const FullMode = {
 
     initServicesGrid() {
         let services = getServicesList();
-        if (state.context.section !== 'all') {
-            services = services.filter(s => s.category === state.context.section);
-        }
+        if (state.context.section !== 'all') services = services.filter(s => s.category === state.context.section);
         this.renderServices(services);
     },
 
@@ -295,105 +367,124 @@ const FullMode = {
         this.renderMasters(masters);
     },
 
-    initCalendar() {
-        const input = document.getElementById('date');
-        if (!input || typeof flatpickr === 'undefined') return;
-
-
-        if (input._flatpickr) {
-            input._flatpickr.destroy();
+    renderDays() {
+    const daysGrid = document.getElementById('full-days-grid');
+    if (!daysGrid) return;
+    
+    const monthSpan = document.getElementById('full-calendar-month');
+    if (monthSpan) {
+        monthSpan.textContent = `${monthNames[state.currentMonth.getMonth()]} ${state.currentMonth.getFullYear()}`;
+    }
+    
+    const days = generateMonthDays(state.currentMonth);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    daysGrid.innerHTML = days.map(day => {
+        if (day.isEmpty || !day.date) {
+            return `<div class="time-calendar__day empty"></div>`;
         }
+        
+        const dayDate = new Date(day.date);
+        dayDate.setHours(0, 0, 0, 0);
+        
+        const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
+        const isPast = dayDate < today;
+        const isSelected = state.selectedDate && formatDate(day.date) === formatDate(state.selectedDate);
+        
+        let classes = 'time-calendar__day';
+        if (isSelected) classes += ' selected';
+        if (isPast) classes += ' disabled';
+        if (isWeekend) classes += ' weekend';
+        
+        return `<div class="${classes}" data-date="${formatDate(day.date)}">${day.date.getDate()}</div>`;
+    }).join('');
+        daysGrid.querySelectorAll('.time-calendar__day:not(.disabled)').forEach(el => {
+            el.addEventListener('click', async () => {
+                daysGrid.querySelectorAll('.time-calendar__day').forEach(d => d.classList.remove('selected'));
+                el.classList.add('selected');
+                const dateStr = el.dataset.date;
+                const [day, month, year] = dateStr.split('.');
+                state.selectedDate = new Date(year, month - 1, day);
+                const masterName = MASTERS_DATA[state.masterId]?.name || state.masterId;
+                await loadBusySlots(masterName, dateStr);
+                this.renderSlots();
+                const isWeekend = state.selectedDate.getDay() === 0 || state.selectedDate.getDay() === 6;
+                state.weekendSurcharge = isWeekend ? 200 : 0;
+                showWeekendNotice(isWeekend);
+            });
+        });
+    },
 
-
-        input.value = '';
-        input.removeAttribute('value');
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-
-        const fp = flatpickr(input, {
-            locale: 'ru',
-            minDate: 'today',
-            dateFormat: 'd.m.Y',
-            defaultDate: null,
-            disable: [
-                function(date) {
-                    return date < today;
-                }
-            ],
-            onChange: async (selectedDates, dateStr) => {
-                if (selectedDates && selectedDates.length === 1 && dateStr && state.masterId && state.masterId !== 'any') {
-
-                    const masterName = MASTERS_DATA[state.masterId]?.name || state.masterId;
-                    console.log('📅 Выбрана дата:', dateStr, 'Мастер:', masterName);
-
-                    await loadBusySlots(masterName, dateStr);
-                    const timeSelect = document.getElementById('time');
-                    if (timeSelect) timeSelect.disabled = false;
-                    await FullMode.refreshTimeSlots();
-
-                    const isWeekend = selectedDates[0].getDay() === 0 || selectedDates[0].getDay() === 6;
-                    state.weekendSurcharge = isWeekend ? 200 : 0;
-                    showWeekendNotice(isWeekend);
-                }
-            },
-            onReady: function(selectedDates, dateStr, instance) {
-
-                instance.clear();
-                input.value = '';
-            },
-            onOpen: function(selectedDates, dateStr, instance) {
-
-                instance.clear();
-                input.value = '';
+renderSlots() {
+    const slotsGrid = document.getElementById('full-slots-grid');
+    if (!slotsGrid) return;
+    
+    slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
+        const isDisabled = state.busySlots.has(slot);
+        const isSelected = state.selectedTime === slot;
+        
+        let isInRange = false;
+        if (state.selectedTime) {
+            const [selectedHour, selectedMinute] = state.selectedTime.split(':').map(Number);
+            const [currentHour, currentMinute] = slot.split(':').map(Number);
+            
+            const selectedMinutes = selectedHour * 60 + selectedMinute;
+            const currentMinutes = currentHour * 60 + currentMinute;
+            
+            if (currentMinutes >= selectedMinutes && currentMinutes <= selectedMinutes + 45) {
+                isInRange = true;
             }
-        });
-    },
-
-    initTimeSlots() {
-        const select = document.getElementById('time');
-        if (!select) return;
-        select.innerHTML = '<option value="">— Выберите время —</option>';
-        TIME_SLOTS.forEach(slot => {
-            const opt = document.createElement('option');
-            opt.value = slot;
-            opt.textContent = slot;
-            select.appendChild(opt);
-        });
-    },
-
-async refreshTimeSlots() {
-    const select = document.getElementById('time');
-    const date = document.getElementById('date')?.value;
-    if (!select || !date || !state.masterId || state.masterId === 'any') return;
-    
-    const masterName = MASTERS_DATA[state.masterId]?.name || state.masterId;
-    console.log('Запрашиваем занятые слоты для мастера:', masterName, date);
-    await loadBusySlots(masterName, date);
-    console.log('Занятые слоты после загрузки:', state.busySlots);
-    
-    select.innerHTML = '<option value="">— Выберите время —</option>';
-    TIME_SLOTS.forEach(slot => {
-        const option = document.createElement('option');
-        option.value = slot;
-        option.textContent = slot;
-        if (state.busySlots.includes(slot)) {
-            option.disabled = true;
-            option.style.cssText = 'color:#999;text-decoration:line-through';
         }
-        select.appendChild(option);
+        
+        let classes = 'time-calendar__slot';
+        if (isSelected) classes += ' selected';
+        if (isDisabled) classes += ' disabled';
+        if (isInRange && !isSelected && !isDisabled) classes += ' in-range';
+        
+        return `<div class="${classes}" data-time="${slot}">${slot}</div>`;
+    }).join('');
+    
+    slotsGrid.querySelectorAll('.time-calendar__slot:not(.disabled)').forEach(el => {
+        el.addEventListener('click', () => {
+            const clickedTime = el.dataset.time;
+            state.selectedTime = clickedTime;
+            this.renderSlots(); 
+        });
     });
+    },
+
+    initTimeCalendar() {
+        this.renderDays();
+        this.renderSlots();
+        const prevBtn = document.getElementById('full-calendar-prev');
+        const nextBtn = document.getElementById('full-calendar-next');
+        if (prevBtn) {
+            prevBtn.replaceWith(prevBtn.cloneNode(true));
+            document.getElementById('full-calendar-prev')?.addEventListener('click', () => {
+                state.currentMonth = new Date(state.currentMonth.getFullYear(), state.currentMonth.getMonth() - 1, 1);
+                this.renderDays();
+            });
+        }
+        if (nextBtn) {
+            nextBtn.replaceWith(nextBtn.cloneNode(true));
+            document.getElementById('full-calendar-next')?.addEventListener('click', () => {
+                state.currentMonth = new Date(state.currentMonth.getFullYear(), state.currentMonth.getMonth() + 1, 1);
+                this.renderDays();
+            });
+        }
     },
 
     updateSummary() {
         const summary = document.getElementById('summary');
         if (!summary) return;
         const master = MASTERS_DATA[state.masterId];
+        const serviceName = getServiceName(state.serviceId);
+        const dateStr = state.selectedDate ? formatDate(state.selectedDate) : '—';
         summary.innerHTML = `
-            <div><strong>Услуга:</strong> ${getServiceName(state.serviceId)}</div>
+            <div><strong>Услуга:</strong> ${serviceName}</div>
             <div><strong>Мастер:</strong> ${master?.name || '—'}${master?.specialty ? ` (${master.specialty})` : ''}</div>
-            <div><strong>Дата/время:</strong> ${document.getElementById('date')?.value || '—'} ${document.getElementById('time')?.value || '—'}</div>
+            <div><strong>Дата/время:</strong> ${dateStr} ${state.selectedTime || '—'}</div>
             <div><strong>Итого:</strong> ${getTotalPrice()}₽</div>
         `;
     },
@@ -416,10 +507,8 @@ async refreshTimeSlots() {
     async submit() {
         const name = document.getElementById('name')?.value;
         const phone = document.getElementById('phone')?.value;
-        const date = document.getElementById('date')?.value;
-        const time = document.getElementById('time')?.value;
         const comment = document.getElementById('comment')?.value || '';
-        if (!name || !phone || !state.serviceId || !state.masterId || !date || !time) {
+        if (!name || !phone || !state.serviceId || !state.masterId || !state.selectedDate || !state.selectedTime) {
             showNotification('Заполните все поля');
             return;
         }
@@ -430,8 +519,8 @@ async refreshTimeSlots() {
         const master = MASTERS_DATA[state.masterId];
         const booking = {
             name, phone, service: getServiceName(state.serviceId), master: master?.name || state.masterId,
-            masterLevel: master?.specialty || '', date, time, price: getTotalPrice(), comment,
-            createdAt: new Date().toISOString()
+            masterLevel: master?.specialty || '', date: formatDate(state.selectedDate), time: state.selectedTime,
+            price: getTotalPrice(), comment, createdAt: new Date().toISOString()
         };
         const btn = document.getElementById('submit-booking');
         const original = btn.textContent;
@@ -449,7 +538,9 @@ async refreshTimeSlots() {
                 }, 2000);
             } else if (data.error === 'Это время уже занято') {
                 showNotification('❌ Это время уже занято');
-                await FullMode.refreshTimeSlots();
+                const masterName = MASTERS_DATA[state.masterId]?.name || state.masterId;
+                await loadBusySlots(masterName, formatDate(state.selectedDate));
+                this.renderSlots();
             } else {
                 showNotification(data.error || 'Ошибка');
             }
@@ -462,133 +553,127 @@ async refreshTimeSlots() {
     },
 
     reset() {
-        ['name', 'phone', 'comment', 'date'].forEach(id => {
+        state.selectedDate = null;
+        state.selectedTime = null;
+        state.busySlots = new Set();
+        state.weekendSurcharge = 0;
+        state.currentMonth = new Date();
+        ['name', 'phone', 'comment'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
-        const timeSelect = document.getElementById('time');
-        if (timeSelect) timeSelect.disabled = true;
     },
 
     attachEvents() {
-    // Кнопки выбора на стартовом экране
-    document.querySelectorAll('[data-start]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const start = btn.dataset.start;
-            if (start === 'service') {
-                state.masterId = null;
-                this.initServicesGrid();
-                this.showScreen('service');
-            } else if (start === 'master') {
-                state.serviceId = null;
-                state.masterId = null;
+        document.querySelectorAll('[data-start]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const start = btn.dataset.start;
+                if (start === 'service') {
+                    state.masterId = null;
+                    this.initServicesGrid();
+                    this.showScreen('service');
+                } else if (start === 'master') {
+                    state.serviceId = null;
+                    state.masterId = null;
+                    this.initMastersGrid();
+                    this.showScreen('master');
+                } else if (start === 'any-master') {
+                    state.masterId = 'any';
+                    this.initServicesGrid();
+                    this.showScreen('service');
+                }
+            });
+        });
+
+        document.getElementById('start-next')?.addEventListener('click', async () => {
+            if (!state.serviceId && !state.masterId) {
+                showNotification('Выберите услугу или мастера');
+                return;
+            }
+            if (state.masterId === 'any') {
+                const anyId = getAnyMasterId();
+                if (!anyId) {
+                    showNotification('Нет доступных мастеров');
+                    return;
+                }
+                state.masterId = anyId;
+            }
+            if (state.masterId && !state.serviceId) {
+                const servicesForMaster = getMasterServices(state.masterId);
+                if (servicesForMaster.length) {
+                    const allServices = getServicesList();
+                    const filtered = allServices.filter(s => servicesForMaster.includes(s.id));
+                    this.renderServices(filtered);
+                    this.showScreen('service');
+                    return;
+                }
+            }
+            if (state.serviceId && !state.masterId) {
                 this.initMastersGrid();
                 this.showScreen('master');
-            } else if (start === 'any-master') {
-                state.masterId = 'any';
-                this.initServicesGrid();
-                this.showScreen('service');
+                return;
+            }
+            if (state.serviceId && state.masterId) {
+                this.initTimeCalendar();
+                this.showScreen('time');
             }
         });
-    });
 
-    // Кнопка «Далее» на стартовом экране
-    document.getElementById('start-next')?.addEventListener('click', async () => {
-        if (!state.serviceId && !state.masterId) {
-            showNotification('Выберите услугу или мастера');
-            return;
-        }
-
-        if (state.masterId === 'any') {
-            const anyId = getAnyMasterId();
-            if (!anyId) {
-                showNotification('Нет доступных мастеров');
+        document.getElementById('service-next')?.addEventListener('click', () => {
+            if (!state.serviceId) {
+                showNotification('Выберите услугу');
                 return;
             }
-            state.masterId = anyId;
-        }
+            if (state.masterId) {
+                this.initTimeCalendar();
+                this.showScreen('time');
+            } else {
+                this.initMastersGrid();
+                this.showScreen('master');
+            }
+        });
 
-        // СЛУЧАЙ 1: выбран мастер → показываем его услуги
-        if (state.masterId && !state.serviceId) {
-            const servicesForMaster = getMasterServices(state.masterId);
-            if (servicesForMaster.length) {
-                const allServices = getServicesList();
-                const filtered = allServices.filter(s => servicesForMaster.includes(s.id));
-                this.renderServices(filtered);
-                this.showScreen('service');
+        document.getElementById('master-next')?.addEventListener('click', () => {
+            if (!state.masterId) {
+                showNotification('Выберите мастера');
                 return;
             }
-        }
+            if (state.serviceId) {
+                this.initTimeCalendar();
+                this.showScreen('time');
+            } else {
+                const servicesForMaster = getMasterServices(state.masterId);
+                if (servicesForMaster.length) {
+                    const allServices = getServicesList();
+                    const filtered = allServices.filter(s => servicesForMaster.includes(s.id));
+                    this.renderServices(filtered);
+                    this.showScreen('service');
+                } else {
+                    showNotification('У этого мастера нет услуг');
+                }
+            }
+        });
 
-        // СЛУЧАЙ 2: выбрана услуга → показываем мастеров
-        if (state.serviceId && !state.masterId) {
-            this.initMastersGrid();
-            this.showScreen('master');
-            return;
-        }
+        document.getElementById('time-next')?.addEventListener('click', () => {
+            if (!state.selectedDate || !state.selectedTime) {
+                showNotification('Выберите дату и время');
+                return;
+            }
+            this.updateSummary();
+            this.showScreen('client');
+        });
 
-        // СЛУЧАЙ 3: выбрано и то, и то → время
-        if (state.serviceId && state.masterId) {
-            this.showScreen('time');
-        }
-    });
+        document.getElementById('submit-booking')?.addEventListener('click', () => this.submit());
 
-    // Кнопка «Далее» на экране услуг
-    document.getElementById('service-next')?.addEventListener('click', () => {
-        if (!state.serviceId) {
-            showNotification('Выберите услугу');
-            return;
-        }
-        // После выбора услуги идём ко времени
-        this.showScreen('time');
-    });
+        document.querySelectorAll('[data-back]').forEach(btn => {
+            btn.addEventListener('click', () => this.showScreen(btn.dataset.back));
+        });
 
-    // Кнопка «Далее» на экране мастеров
-    document.getElementById('master-next')?.addEventListener('click', () => {
-        if (!state.masterId) {
-            showNotification('Выберите мастера');
-            return;
-        }
-        // Показываем услуги выбранного мастера
-        const servicesForMaster = getMasterServices(state.masterId);
-        if (servicesForMaster.length) {
-            const allServices = getServicesList();
-            const filtered = allServices.filter(s => servicesForMaster.includes(s.id));
-            this.renderServices(filtered);
-            this.showScreen('service');
-        } else {
-            showNotification('У этого мастера нет услуг');
-        }
-    });
-
-    // Кнопка «Далее» на экране времени
-    document.getElementById('time-next')?.addEventListener('click', () => {
-        const date = document.getElementById('date')?.value;
-        const time = document.getElementById('time')?.value;
-        if (!date || !time) {
-            showNotification('Выберите дату и время');
-            return;
-        }
-        this.updateSummary();
-        this.showScreen('client');
-    });
-
-    // Отправка формы
-    document.getElementById('submit-booking')?.addEventListener('click', () => this.submit());
-
-    // Кнопки «Назад»
-    document.querySelectorAll('[data-back]').forEach(btn => {
-        btn.addEventListener('click', () => this.showScreen(btn.dataset.back));
-    });
-
-    // Инициализация
-    this.initServicesGrid();
-    this.initMastersGrid();
-    this.initCalendar();
-    this.initTimeSlots();
-    this.initPhoneMask();
-    this.showScreen('start');
-}
+        this.initServicesGrid();
+        this.initMastersGrid();
+        this.initPhoneMask();
+        this.showScreen('start');
+    }
 };
 
 const StepMode = {
@@ -603,7 +688,7 @@ const StepMode = {
             if (i + 1 === step) el.classList.add('active');
         });
         if (step === 2 && state.serviceId) this.initMastersGrid();
-        if (step === 3) { this.initCalendar(); this.initTimeSlots(); }
+        if (step === 3) this.initTimeCalendar();
         if (step === 4) this.updateSummary();
     },
 
@@ -649,90 +734,115 @@ const StepMode = {
         });
     },
 
-    initCalendar() {
-    const input = document.getElementById('step-date');
-    if (!input || typeof flatpickr === 'undefined') return;
-    
-    if (input._flatpickr) {
-        input._flatpickr.destroy();
-    }
-    
-    input.value = '';
-    input.removeAttribute('value');
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    flatpickr(input, {
-        locale: 'ru',
-        minDate: 'today',
-        dateFormat: 'd.m.Y',
-        defaultDate: null,
-        disable: [date => date < today],
-        onChange: async (selectedDates, dateStr) => {
-            if (selectedDates && selectedDates.length === 1 && dateStr && state.masterId) {
+    renderDays() {
+        const daysGrid = document.getElementById('step-days-grid');
+        if (!daysGrid) return;
+        const monthSpan = document.getElementById('step-calendar-month');
+        if (monthSpan) {
+            monthSpan.textContent = `${monthNames[state.currentMonth.getMonth()]} ${state.currentMonth.getFullYear()}`;
+        }
+        const days = generateMonthDays(state.currentMonth);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        daysGrid.innerHTML = days.map(day => {
+            const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
+            const isPast = day.date < today;
+            const isSelected = state.selectedDate && formatDate(day.date) === formatDate(state.selectedDate);
+            const isCurrentMonth = day.isCurrentMonth;
+            let classes = 'time-calendar__day';
+            if (isSelected) classes += ' selected';
+            if (isPast && isCurrentMonth) classes += ' disabled';
+            if (!isCurrentMonth) classes += ' other-month';
+            if (isWeekend && isCurrentMonth) classes += ' weekend';
+            return `<div class="${classes}" data-date="${formatDate(day.date)}">${day.date.getDate()}</div>`;
+        }).join('');
+        daysGrid.querySelectorAll('.time-calendar__day:not(.disabled)').forEach(el => {
+            el.addEventListener('click', async () => {
+                daysGrid.querySelectorAll('.time-calendar__day').forEach(d => d.classList.remove('selected'));
+                el.classList.add('selected');
+                const dateStr = el.dataset.date;
+                const [day, month, year] = dateStr.split('.');
+                state.selectedDate = new Date(year, month - 1, day);
                 const masterName = MASTERS_DATA[state.masterId]?.name || state.masterId;
                 await loadBusySlots(masterName, dateStr);
-                const timeSelect = document.getElementById('step-time');
-                if (timeSelect) timeSelect.disabled = false;
-                await StepMode.refreshTimeSlots(); 
-                const isWeekend = selectedDates[0].getDay() === 0 || selectedDates[0].getDay() === 6;
+                this.renderSlots();
+                const isWeekend = state.selectedDate.getDay() === 0 || state.selectedDate.getDay() === 6;
                 state.weekendSurcharge = isWeekend ? 200 : 0;
                 showWeekendNotice(isWeekend);
-            }
-        },
-        onReady: function(selectedDates, dateStr, instance) {
-            instance.clear();
-            input.value = '';
-        },
-        onOpen: function(selectedDates, dateStr, instance) {
-            instance.clear();
-            input.value = '';
-        }
-    });
-    },
-
-    initTimeSlots() {
-        const select = document.getElementById('step-time');
-        if (!select) return;
-        select.innerHTML = '<option value="">— Выберите время —</option>';
-        TIME_SLOTS.forEach(slot => {
-            const opt = document.createElement('option');
-            opt.value = slot;
-            opt.textContent = slot;
-            select.appendChild(opt);
+            });
         });
     },
 
-async refreshTimeSlots() {
-    const select = document.getElementById('step-time');
-    const date = document.getElementById('step-date')?.value;
-    if (!select || !date || !state.masterId) return;
+renderSlots() {
+    const slotsGrid = document.getElementById('full-slots-grid');
+    if (!slotsGrid) return;
     
-    const masterName = MASTERS_DATA[state.masterId]?.name || state.masterId;
-    await loadBusySlots(masterName, date);
-    
-    select.innerHTML = '<option value="">— Выберите время —</option>';
-    TIME_SLOTS.forEach(slot => {
-        const option = document.createElement('option');
-        option.value = slot;
-        option.textContent = slot;
-        if (state.busySlots.includes(slot)) {
-            option.disabled = true;
-            option.style.cssText = 'color:#999;text-decoration:line-through';
+    slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
+        const isDisabled = state.busySlots.has(slot);
+        const isSelected = state.selectedTime === slot;
+        
+
+        let isInRange = false;
+        if (state.selectedTime) {
+            const [selectedHour, selectedMinute] = state.selectedTime.split(':').map(Number);
+            const [currentHour, currentMinute] = slot.split(':').map(Number);
+            
+            const selectedMinutes = selectedHour * 60 + selectedMinute;
+            const currentMinutes = currentHour * 60 + currentMinute;
+            
+            if (currentMinutes >= selectedMinutes && currentMinutes <= selectedMinutes + 45) {
+                isInRange = true;
+            }
         }
-        select.appendChild(option);
+        
+        let classes = 'time-calendar__slot';
+        if (isSelected) classes += ' selected';
+        if (isDisabled) classes += ' disabled';
+        if (isInRange && !isSelected && !isDisabled) classes += ' in-range';
+        
+        return `<div class="${classes}" data-time="${slot}">${slot}</div>`;
+    }).join('');
+    
+    slotsGrid.querySelectorAll('.time-calendar__slot:not(.disabled)').forEach(el => {
+        el.addEventListener('click', () => {
+            const clickedTime = el.dataset.time;
+            state.selectedTime = clickedTime;
+            this.renderSlots();
+        });
     });
+    },
+
+    initTimeCalendar() {
+        this.renderDays();
+        this.renderSlots();
+        const prevBtn = document.getElementById('step-calendar-prev');
+        const nextBtn = document.getElementById('step-calendar-next');
+        if (prevBtn) {
+            prevBtn.replaceWith(prevBtn.cloneNode(true));
+            document.getElementById('step-calendar-prev')?.addEventListener('click', () => {
+                state.currentMonth = new Date(state.currentMonth.getFullYear(), state.currentMonth.getMonth() - 1, 1);
+                this.renderDays();
+            });
+        }
+        if (nextBtn) {
+            nextBtn.replaceWith(nextBtn.cloneNode(true));
+            document.getElementById('step-calendar-next')?.addEventListener('click', () => {
+                state.currentMonth = new Date(state.currentMonth.getFullYear(), state.currentMonth.getMonth() + 1, 1);
+                this.renderDays();
+            });
+        }
     },
 
     updateSummary() {
         const summary = document.getElementById('step-summary');
         if (!summary) return;
         const master = MASTERS_DATA[state.masterId];
+        const serviceName = getServiceName(state.serviceId);
+        const dateStr = state.selectedDate ? formatDate(state.selectedDate) : '—';
         summary.innerHTML = `
-            <div><strong>Услуга:</strong> ${getServiceName(state.serviceId)}</div>
+            <div><strong>Услуга:</strong> ${serviceName}</div>
             <div><strong>Мастер:</strong> ${master?.name || '—'}${master?.specialty ? ` (${master.specialty})` : ''}</div>
-            <div><strong>Дата/время:</strong> ${document.getElementById('step-date')?.value || '—'} ${document.getElementById('step-time')?.value || '—'}</div>
+            <div><strong>Дата/время:</strong> ${dateStr} ${state.selectedTime || '—'}</div>
             <div><strong>Итого:</strong> ${getTotalPrice()}₽</div>
         `;
     },
@@ -755,10 +865,8 @@ async refreshTimeSlots() {
     async submit() {
         const name = document.getElementById('step-name')?.value;
         const phone = document.getElementById('step-phone')?.value;
-        const date = document.getElementById('step-date')?.value;
-        const time = document.getElementById('step-time')?.value;
         const comment = document.getElementById('step-comment')?.value || '';
-        if (!name || !phone || !state.serviceId || !state.masterId || !date || !time) {
+        if (!name || !phone || !state.serviceId || !state.masterId || !state.selectedDate || !state.selectedTime) {
             showNotification('Заполните все поля');
             return;
         }
@@ -769,8 +877,8 @@ async refreshTimeSlots() {
         const master = MASTERS_DATA[state.masterId];
         const booking = {
             name, phone, service: getServiceName(state.serviceId), master: master?.name || state.masterId,
-            masterLevel: master?.specialty || '', date, time, price: getTotalPrice(), comment,
-            createdAt: new Date().toISOString()
+            masterLevel: master?.specialty || '', date: formatDate(state.selectedDate), time: state.selectedTime,
+            price: getTotalPrice(), comment, createdAt: new Date().toISOString()
         };
         const btn = document.getElementById('step-submit');
         const original = btn.textContent;
@@ -788,7 +896,9 @@ async refreshTimeSlots() {
                 }, 2000);
             } else if (data.error === 'Это время уже занято') {
                 showNotification('❌ Это время уже занято');
-                await StepMode.refreshTimeSlots();
+                const masterName = MASTERS_DATA[state.masterId]?.name || state.masterId;
+                await loadBusySlots(masterName, formatDate(state.selectedDate));
+                this.renderSlots();
             } else {
                 showNotification(data.error || 'Ошибка');
             }
@@ -801,12 +911,15 @@ async refreshTimeSlots() {
     },
 
     reset() {
-        ['step-name', 'step-phone', 'step-comment', 'step-date'].forEach(id => {
+        state.selectedDate = null;
+        state.selectedTime = null;
+        state.busySlots = new Set();
+        state.weekendSurcharge = 0;
+        state.currentMonth = new Date();
+        ['step-name', 'step-phone', 'step-comment'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
-        const timeSelect = document.getElementById('step-time');
-        if (timeSelect) timeSelect.disabled = true;
     },
 
     attachEvents() {
@@ -815,15 +928,28 @@ async refreshTimeSlots() {
                 if (StepMode.currentStep === 1 && !state.serviceId) { showNotification('Выберите услугу'); return; }
                 if (StepMode.currentStep === 2 && !state.masterId) { showNotification('Выберите мастера'); return; }
                 if (StepMode.currentStep === 3) {
-                    const date = document.getElementById('step-date')?.value;
-                    const time = document.getElementById('step-time')?.value;
-                    if (!date || !time) { showNotification('Выберите дату и время'); return; }
+                    if (!state.selectedDate || !state.selectedTime) { showNotification('Выберите дату и время'); return; }
+                }
+                if (StepMode.currentStep === 1 && state.masterId) {
+                    StepMode.showStep(3);
+                    return;
+                }
+                if (StepMode.currentStep === 2 && state.serviceId) {
+                    StepMode.showStep(3);
+                    return;
                 }
                 StepMode.showStep(StepMode.currentStep + 1);
             });
         });
         document.querySelectorAll('.btn-prev').forEach(btn => {
             btn.addEventListener('click', () => StepMode.showStep(StepMode.currentStep - 1));
+        });
+        document.getElementById('step-time-next')?.addEventListener('click', () => {
+            if (!state.selectedDate || !state.selectedTime) {
+                showNotification('Выберите дату и время');
+                return;
+            }
+            StepMode.showStep(4);
         });
         document.getElementById('step-submit')?.addEventListener('click', () => StepMode.submit());
         StepMode.initServicesGrid();
@@ -841,8 +967,11 @@ export function initBookingForm() {
         state.mode = state.context.source === 'nav' ? 'full' : 'step';
         state.serviceId = state.context.presetServiceId || null;
         state.masterId = state.context.presetMasterId || null;
-        state.busySlots = [];
+        state.busySlots = new Set();
+        state.selectedDate = null;
+        state.selectedTime = null;
         state.weekendSurcharge = 0;
+        state.currentMonth = new Date();
 
         const modalBody = modal.querySelector('.modal-booking__body');
         modalBody.innerHTML = state.mode === 'full' ? Templates.full : Templates.step;

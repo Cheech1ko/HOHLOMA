@@ -469,6 +469,130 @@
     font-size: 0.75rem;
 }
 
+/* Календарь времени */
+.time-calendar {
+    padding: 20px;
+}
+
+/* Сетка дней */
+.time-calendar__days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 25px;
+}
+
+.time-calendar__day {
+    padding: 10px 5px;
+    text-align: center;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.time-calendar__day:hover {
+    border-color: #c9a227;
+    background: rgba(201, 162, 39, 0.1);
+    transform: translateY(-2px);
+}
+
+.time-calendar__day.selected {
+    background: #c9a227;
+    color: #0a0a0a;
+    border-color: #c9a227;
+}
+
+.time-calendar__day.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    background: #2a2a2a;
+    text-decoration: line-through;
+    transform: none;
+}
+
+.time-calendar__day.disabled:hover {
+    border-color: #2a2a2a;
+    background: #2a2a2a;
+}
+
+.time-calendar__day.weekend {
+    color: #dbb957;
+}
+
+.time-calendar__weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    margin-bottom: 10px;
+    gap: 8px;
+}
+
+.time-calendar__weekdays span {
+    font-size: 0.75rem;
+    color: #aaa;
+    padding: 5px;
+}
+.time-calendar__day.empty {
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: default;
+    opacity: 0;
+}
+/* Сетка времени */
+.time-calendar__slots {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 5px;
+}
+
+.time-calendar__slot {
+    padding: 10px 5px;
+    text-align: center;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.8rem;
+}
+
+.time-calendar__slot:hover:not(.disabled) {
+    border-color: #c9a227;
+    background: rgba(201, 162, 39, 0.1);
+    transform: translateY(-2px);
+}
+
+.time-calendar__slot.selected {
+    background: #c9a227;
+    color: #0a0a0a;
+    border-color: #c9a227;
+}
+
+.time-calendar__slot.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: #2a2a2a;
+    text-decoration: line-through;
+    transform: none;
+}
+
+.time-calendar__slot.disabled:hover {
+    border-color: #2a2a2a;
+    background: #2a2a2a;
+}
+
+.time-calendar__slot.in-range {
+    background: rgba(201, 162, 39, 0.2);
+    border-color: #c9a227;
+}
+
 /* Адаптив */
 @media (max-width: 600px) {
     .modal-booking__container {

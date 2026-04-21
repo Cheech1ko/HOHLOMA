@@ -134,9 +134,11 @@
     </div>
 
     <script>
-        const API_URL = 'https://hohloma-backend.onrender.com/api/admin/bookings';
+    const API_URL = 'https://hohloma-backend.onrender.com/api/admin/bookings';
         let currentBookings = [];
         let currentSort = { field: 'id', order: 'desc' };
+        let autoRefreshInterval = null;
+        let currentBookingsIds = new Set();
         
         async function loadMasters() {
             const res = await fetch(API_URL);
@@ -152,47 +154,69 @@
         }
         
         async function loadBookings() {
-    console.log('loadBookings called');
-    
-    const status = document.getElementById('filter-status').value;
-    const master = document.getElementById('filter-master').value;
-    const fromDate = document.getElementById('filter-from').value;
-    const toDate = document.getElementById('filter-to').value;
-    
-    let url = API_URL;
-    const params = [];
-    
-    if (status && status !== '') {
-        params.push(`status=${encodeURIComponent(status)}`);
-    }
-    if (master && master !== '') {
-        params.push(`master=${encodeURIComponent(master)}`);
-    }
-    if (fromDate && fromDate !== '') {
-        params.push(`from=${fromDate}`);
-    }
-    if (toDate && toDate !== '') {
-        params.push(`to=${toDate}`);
-    }
-    if (currentSort.field) {
-        params.push(`sort=${currentSort.field}&order=${currentSort.order}`);
-    }
-    
-    if (params.length > 0) {
-        url += '?' + params.join('&');
-    }
-    
-    console.log('Request URL:', url);
-    
-    try {
-        const res = await fetch(url);
-        currentBookings = await res.json();
-        renderTable();
-    } catch (err) {
-        console.error('Ошибка загрузки:', err);
-        document.getElementById('table-container').innerHTML = '<div class="loading">Ошибка загрузки</div>';
-    }
-}
+            const status = document.getElementById('filter-status').value;
+            const master = document.getElementById('filter-master').value;
+            const fromDate = document.getElementById('filter-from').value;
+            const toDate = document.getElementById('filter-to').value;
+            
+            let url = API_URL;
+            const params = [];
+            if (status) params.push(`status=${encodeURIComponent(status)}`);
+            if (master) params.push(`master=${encodeURIComponent(master)}`);
+            if (fromDate) params.push(`from=${fromDate}`);
+            if (toDate) params.push(`to=${toDate}`);
+            if (currentSort.field) params.push(`sort=${currentSort.field}&order=${currentSort.order}`);
+            if (params.length) url += '?' + params.join('&');
+            
+            try {
+                const res = await fetch(url);
+                const newBookings = await res.json();
+                
+                // Проверяем новые записи
+                const oldIds = new Set(currentBookings.map(b => b.id));
+                const freshNewBookings = newBookings.filter(b => !oldIds.has(b.id));
+                
+                if (freshNewBookings.length > 0) {
+                    showNewBookingsNotification(freshNewBookings);
+                }
+                
+                currentBookings = newBookings;
+                renderTable();
+            } catch (err) {
+                console.error('Ошибка загрузки:', err);
+                document.getElementById('table-container').innerHTML = '<div class="loading">Ошибка загрузки</div>';
+            }
+        }
+        
+        function showNewBookingsNotification(newBookings) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #c9a227;
+                color: #0a0a0a;
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-weight: bold;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+                cursor: pointer;
+            `;
+            notification.innerHTML = `📋 Новых записей: ${newBookings.length}`;
+            notification.onclick = () => {
+                notification.remove();
+                const firstNewId = newBookings[0]?.id;
+                if (firstNewId) {
+                    const row = document.querySelector(`tr[data-id="${firstNewId}"]`);
+                    if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            };
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                if (notification.parentNode) notification.remove();
+            }, 5000);
+        }
         
         function renderTable() {
             const container = document.getElementById('table-container');
@@ -234,8 +258,7 @@
                         <td>${escapeHtml(b.master)}</td>
                         <td>${b.date || ''} ${b.time || ''}</td>
                         <td>${b.price}₽</td>
-                        <td>
-                            <select class="status-select" data-id="${b.id}" data-status="${b.status || 'new'}">
+                        <td><select class="status-select" data-id="${b.id}" data-status="${b.status || 'new'}">
                                 <option value="new" ${b.status === 'new' ? 'selected' : ''}>Новая</option>
                                 <option value="confirmed" ${b.status === 'confirmed' ? 'selected' : ''}>Подтверждена</option>
                                 <option value="completed" ${b.status === 'completed' ? 'selected' : ''}>Выполнена</option>
@@ -295,22 +318,37 @@
             });
         }
         
-            document.getElementById('apply-filters').addEventListener('click', function() {
-                console.log('Apply filters clicked');
-                loadBookings();
-            });
-
-            document.getElementById('reset-filters').addEventListener('click', function() {
-                console.log('Reset filters clicked');
-                document.getElementById('filter-status').value = '';
-                document.getElementById('filter-master').value = '';
-                document.getElementById('filter-from').value = '';
-                document.getElementById('filter-to').value = '';
-                loadBookings();
-});
+        function startAutoRefresh(intervalMs) {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            if (intervalMs > 0) {
+                autoRefreshInterval = setInterval(() => {
+                    console.log('🔄 Автообновление...');
+                    loadBookings();
+                }, intervalMs);
+            }
+        }
+        
+        document.getElementById('apply-filters').addEventListener('click', () => loadBookings());
+        document.getElementById('reset-filters').addEventListener('click', () => {
+            document.getElementById('filter-status').value = '';
+            document.getElementById('filter-master').value = '';
+            document.getElementById('filter-from').value = '';
+            document.getElementById('filter-to').value = '';
+            loadBookings();
+        });
+        
+        document.getElementById('refresh-interval').addEventListener('change', (e) => {
+            const intervalSec = parseInt(e.target.value);
+            startAutoRefresh(intervalSec * 1000);
+        });
         
         loadMasters();
         loadBookings();
+        startAutoRefresh(60000);
+        
+        window.addEventListener('beforeunload', () => {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        });
     </script>
 </body>
 </html>

@@ -105,13 +105,19 @@ function getBlockedSlots(busyTimes) {
     const blocked = new Set();
     busyTimes.forEach(time => {
         const [hour, minute] = time.split(':').map(Number);
-        for (let m = minute; m < 60; m += 15) {
-            blocked.add(`${hour.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
-        }
-        const nextHour = hour + 1;
-        if (nextHour <= 20) {
-            for (let m = 0; m <= minute; m += 15) {
-                blocked.add(`${nextHour.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+        
+        // Находим начальную минуту слота (0, 15, 30, 45)
+        const startMinute = Math.floor(minute / 15) * 15;
+        
+        for (let i = 0; i < 4; i++) {
+            let newMinute = startMinute + i * 15;
+            let newHour = hour;
+            if (newMinute >= 60) {
+                newMinute -= 60;
+                newHour++;
+            }
+            if (newHour <= 20) {
+                blocked.add(`${newHour.toString().padStart(2, '0')}:${newMinute.toString().padStart(2, '0')}`);
             }
         }
     });
@@ -414,22 +420,43 @@ const FullMode = {
         });
     },
 
-    renderSlots() {
-        const slotsGrid = document.getElementById('full-slots-grid');
-        if (!slotsGrid) return;
-        slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
-            const isDisabled = state.busySlots.has(slot);
-            const isSelected = state.selectedTime === slot;
-            return `<div class="time-calendar__slot ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}" data-time="${slot}">${slot}</div>`;
-        }).join('');
-        slotsGrid.querySelectorAll('.time-calendar__slot:not(.disabled)').forEach(el => {
-            el.addEventListener('click', () => {
-                slotsGrid.querySelectorAll('.time-calendar__slot').forEach(s => s.classList.remove('selected'));
-                el.classList.add('selected');
-                state.selectedTime = el.dataset.time;
-            });
+renderSlots() {
+    const slotsGrid = document.getElementById('full-slots-grid');
+    if (!slotsGrid) return;
+    
+    slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
+        const isDisabled = state.busySlots.has(slot);
+        const isSelected = state.selectedTime === slot;
+        
+        // Проверяем, попадает ли слот в диапазон выбранного времени + 45 минут
+        let isInRange = false;
+        if (state.selectedTime && !isSelected) {
+            const [selectedHour, selectedMinute] = state.selectedTime.split(':').map(Number);
+            const [currentHour, currentMinute] = slot.split(':').map(Number);
+            const selectedMinutes = selectedHour * 60 + selectedMinute;
+            const currentMinutes = currentHour * 60 + currentMinute;
+            if (currentMinutes > selectedMinutes && currentMinutes <= selectedMinutes + 45) {
+                isInRange = true;
+            }
+        }
+        
+        let classes = 'time-calendar__slot';
+        if (isSelected) classes += ' selected';
+        if (isDisabled) classes += ' disabled';
+        if (isInRange) classes += ' in-range';
+        
+        return `<div class="${classes}" data-time="${slot}">${slot}</div>`;
+    }).join('');
+    
+    slotsGrid.querySelectorAll('.time-calendar__slot:not(.disabled)').forEach(el => {
+        el.addEventListener('click', () => {
+            slotsGrid.querySelectorAll('.time-calendar__slot').forEach(s => s.classList.remove('selected'));
+            el.classList.add('selected');
+            state.selectedTime = el.dataset.time;
+            this.renderSlots(); 
         });
-    },
+    });
+},
 
     initTimeCalendar() {
         this.renderDays();
@@ -792,22 +819,42 @@ const StepMode = {
         });
     },
 
-    renderSlots() {
-        const slotsGrid = document.getElementById('step-slots-grid');
-        if (!slotsGrid) return;
-        slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
-            const isDisabled = state.busySlots.has(slot);
-            const isSelected = state.selectedTime === slot;
-            return `<div class="time-calendar__slot ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}" data-time="${slot}">${slot}</div>`;
-        }).join('');
-        slotsGrid.querySelectorAll('.time-calendar__slot:not(.disabled)').forEach(el => {
-            el.addEventListener('click', () => {
-                slotsGrid.querySelectorAll('.time-calendar__slot').forEach(s => s.classList.remove('selected'));
-                el.classList.add('selected');
-                state.selectedTime = el.dataset.time;
-            });
+renderSlots() {
+    const slotsGrid = document.getElementById('step-slots-grid');
+    if (!slotsGrid) return;
+    
+    slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
+        const isDisabled = state.busySlots.has(slot);
+        const isSelected = state.selectedTime === slot;
+        
+        let isInRange = false;
+        if (state.selectedTime && !isSelected) {
+            const [selectedHour, selectedMinute] = state.selectedTime.split(':').map(Number);
+            const [currentHour, currentMinute] = slot.split(':').map(Number);
+            const selectedMinutes = selectedHour * 60 + selectedMinute;
+            const currentMinutes = currentHour * 60 + currentMinute;
+            if (currentMinutes > selectedMinutes && currentMinutes <= selectedMinutes + 45) {
+                isInRange = true;
+            }
+        }
+        
+        let classes = 'time-calendar__slot';
+        if (isSelected) classes += ' selected';
+        if (isDisabled) classes += ' disabled';
+        if (isInRange) classes += ' in-range';
+        
+        return `<div class="${classes}" data-time="${slot}">${slot}</div>`;
+    }).join('');
+    
+    slotsGrid.querySelectorAll('.time-calendar__slot:not(.disabled)').forEach(el => {
+        el.addEventListener('click', () => {
+            slotsGrid.querySelectorAll('.time-calendar__slot').forEach(s => s.classList.remove('selected'));
+            el.classList.add('selected');
+            state.selectedTime = el.dataset.time;
+            this.renderSlots();
         });
-    },
+    });
+},
 
     initTimeCalendar() {
         this.renderDays();

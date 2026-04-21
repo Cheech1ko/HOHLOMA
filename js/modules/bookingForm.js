@@ -104,11 +104,15 @@ function getTotalPrice() {
 function getBlockedSlots(busyTimes) {
     const blocked = new Set();
     busyTimes.forEach(time => {
-        const hour = parseInt(time.split(':')[0]);
-        
-        for (let minute = 0; minute < 60; minute += 15) {
-            const slot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-            blocked.add(slot);
+        const [hour, minute] = time.split(':').map(Number);
+        for (let m = minute; m < 60; m += 15) {
+            blocked.add(`${hour.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+        }
+        const nextHour = hour + 1;
+        if (nextHour <= 20) {
+            for (let m = 0; m <= minute; m += 15) {
+                blocked.add(`${nextHour.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+            }
         }
     });
     return blocked;
@@ -156,25 +160,20 @@ function generateMonthDays(date) {
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    
     let startOffset = firstDay.getDay() - 1;
     if (startOffset === -1) startOffset = 6;
-    
     const days = [];
-    
-    for (let i = 0; i < startOffset; i++) {
-        days.push({ date: null, isCurrentMonth: false, isEmpty: true });
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = startOffset - 1; i >= 0; i--) {
+        days.push({ date: new Date(year, month - 1, prevMonthLastDay - i), isCurrentMonth: false });
     }
-    
     for (let i = 1; i <= lastDay.getDate(); i++) {
-        days.push({ date: new Date(year, month, i), isCurrentMonth: true, isEmpty: false });
+        days.push({ date: new Date(year, month, i), isCurrentMonth: true });
     }
-    
     const remaining = 42 - days.length;
-    for (let i = 0; i < remaining; i++) {
-        days.push({ date: null, isCurrentMonth: false, isEmpty: true });
+    for (let i = 1; i <= remaining; i++) {
+        days.push({ date: new Date(year, month + 1, i), isCurrentMonth: false });
     }
-    
     return days;
 }
 
@@ -257,7 +256,9 @@ const Templates = {
                     <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
                 </div>
                 <div class="time-calendar__days" id="full-days-grid"></div>
-                <div class="time-calendar__slots" id="full-slots-grid"></div>
+                <div class="time-calendar__slots-wrapper" id="full-slots-wrapper">
+                    <div class="time-calendar__slots" id="full-slots-grid"></div>
+                </div>
             </div>
             <div class="booking-footer"><button class="booking-footer__btn" id="time-next">Далее</button></div>
         </div>
@@ -298,7 +299,9 @@ const Templates = {
                     <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
                 </div>
                 <div class="time-calendar__days" id="step-days-grid"></div>
-                <div class="time-calendar__slots" id="step-slots-grid"></div>
+                <div class="time-calendar__slots-wrapper" id="step-slots-wrapper">
+                    <div class="time-calendar__slots" id="step-slots-grid"></div>
+                </div>
             </div>
             <div class="booking-step__actions">
                 <button class="btn btn--outline btn-prev" data-prev="2">Назад</button>
@@ -356,7 +359,9 @@ const FullMode = {
 
     initServicesGrid() {
         let services = getServicesList();
-        if (state.context.section !== 'all') services = services.filter(s => s.category === state.context.section);
+        if (state.context.section !== 'all') {
+            services = services.filter(s => s.category === state.context.section);
+        }
         this.renderServices(services);
     },
 
@@ -368,37 +373,30 @@ const FullMode = {
     },
 
     renderDays() {
-    const daysGrid = document.getElementById('full-days-grid');
-    if (!daysGrid) return;
-    
-    const monthSpan = document.getElementById('full-calendar-month');
-    if (monthSpan) {
-        monthSpan.textContent = `${monthNames[state.currentMonth.getMonth()]} ${state.currentMonth.getFullYear()}`;
-    }
-    
-    const days = generateMonthDays(state.currentMonth);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    daysGrid.innerHTML = days.map(day => {
-        if (day.isEmpty || !day.date) {
-            return `<div class="time-calendar__day empty"></div>`;
+        const daysGrid = document.getElementById('full-days-grid');
+        if (!daysGrid) return;
+        const monthSpan = document.getElementById('full-calendar-month');
+        if (monthSpan) {
+            monthSpan.textContent = `${monthNames[state.currentMonth.getMonth()]} ${state.currentMonth.getFullYear()}`;
         }
-        
-        const dayDate = new Date(day.date);
-        dayDate.setHours(0, 0, 0, 0);
-        
-        const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
-        const isPast = dayDate < today;
-        const isSelected = state.selectedDate && formatDate(day.date) === formatDate(state.selectedDate);
-        
-        let classes = 'time-calendar__day';
-        if (isSelected) classes += ' selected';
-        if (isPast) classes += ' disabled';
-        if (isWeekend) classes += ' weekend';
-        
-        return `<div class="${classes}" data-date="${formatDate(day.date)}">${day.date.getDate()}</div>`;
-    }).join('');
+        const days = generateMonthDays(state.currentMonth);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        daysGrid.innerHTML = days.map(day => {
+            if (day.isEmpty || !day.date) {
+                return `<div class="time-calendar__day empty"></div>`;
+            }
+            const dayDate = new Date(day.date);
+            dayDate.setHours(0, 0, 0, 0);
+            const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
+            const isPast = dayDate < today;
+            const isSelected = state.selectedDate && formatDate(day.date) === formatDate(state.selectedDate);
+            let classes = 'time-calendar__day';
+            if (isSelected) classes += ' selected';
+            if (isPast) classes += ' disabled';
+            if (isWeekend) classes += ' weekend';
+            return `<div class="${classes}" data-date="${formatDate(day.date)}">${day.date.getDate()}</div>`;
+        }).join('');
         daysGrid.querySelectorAll('.time-calendar__day:not(.disabled)').forEach(el => {
             el.addEventListener('click', async () => {
                 daysGrid.querySelectorAll('.time-calendar__day').forEach(d => d.classList.remove('selected'));
@@ -416,42 +414,21 @@ const FullMode = {
         });
     },
 
-renderSlots() {
-    const slotsGrid = document.getElementById('full-slots-grid');
-    if (!slotsGrid) return;
-    
-    slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
-        const isDisabled = state.busySlots.has(slot);
-        const isSelected = state.selectedTime === slot;
-        
-        let isInRange = false;
-        if (state.selectedTime) {
-            const [selectedHour, selectedMinute] = state.selectedTime.split(':').map(Number);
-            const [currentHour, currentMinute] = slot.split(':').map(Number);
-            
-            const selectedMinutes = selectedHour * 60 + selectedMinute;
-            const currentMinutes = currentHour * 60 + currentMinute;
-            
-            if (currentMinutes >= selectedMinutes && currentMinutes <= selectedMinutes + 45) {
-                isInRange = true;
-            }
-        }
-        
-        let classes = 'time-calendar__slot';
-        if (isSelected) classes += ' selected';
-        if (isDisabled) classes += ' disabled';
-        if (isInRange && !isSelected && !isDisabled) classes += ' in-range';
-        
-        return `<div class="${classes}" data-time="${slot}">${slot}</div>`;
-    }).join('');
-    
-    slotsGrid.querySelectorAll('.time-calendar__slot:not(.disabled)').forEach(el => {
-        el.addEventListener('click', () => {
-            const clickedTime = el.dataset.time;
-            state.selectedTime = clickedTime;
-            this.renderSlots(); 
+    renderSlots() {
+        const slotsGrid = document.getElementById('full-slots-grid');
+        if (!slotsGrid) return;
+        slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
+            const isDisabled = state.busySlots.has(slot);
+            const isSelected = state.selectedTime === slot;
+            return `<div class="time-calendar__slot ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}" data-time="${slot}">${slot}</div>`;
+        }).join('');
+        slotsGrid.querySelectorAll('.time-calendar__slot:not(.disabled)').forEach(el => {
+            el.addEventListener('click', () => {
+                slotsGrid.querySelectorAll('.time-calendar__slot').forEach(s => s.classList.remove('selected'));
+                el.classList.add('selected');
+                state.selectedTime = el.dataset.time;
+            });
         });
-    });
     },
 
     initTimeCalendar() {
@@ -695,14 +672,27 @@ const StepMode = {
     initServicesGrid() {
         const grid = document.getElementById('step-services-grid');
         if (!grid) return;
+        
         let services = getServicesList();
-        if (state.context.section !== 'all') services = services.filter(s => s.category === state.context.section);
+        
+        // Фильтруем по секции
+        if (state.context.section !== 'all') {
+            services = services.filter(s => s.category === state.context.section);
+        }
+        
+        // Если есть предустановленный мастер — показываем только его услуги
+        if (state.context.presetMasterId) {
+            const masterServices = getMasterServices(state.context.presetMasterId);
+            services = services.filter(s => masterServices.includes(s.id));
+        }
+        
         grid.innerHTML = services.map(s => `
             <div class="booking-service" data-service-id="${s.id}">
                 <div class="booking-service__info"><h4>${s.name}</h4><div>от ${s.basePrice}₽ • ${s.time}</div></div>
                 <div class="booking-service__select"></div>
             </div>
         `).join('');
+        
         grid.querySelectorAll('.booking-service').forEach(el => {
             el.addEventListener('click', () => {
                 grid.querySelectorAll('.booking-service').forEach(s => s.classList.remove('selected'));
@@ -710,14 +700,24 @@ const StepMode = {
                 state.serviceId = el.dataset.serviceId;
             });
         });
+        
+        // Если есть предустановленная услуга — выбираем её
+        if (state.context.presetServiceId) {
+            const presetEl = document.querySelector(`.booking-service[data-service-id="${state.context.presetServiceId}"]`);
+            if (presetEl) {
+                presetEl.click();
+            }
+        }
     },
 
     initMastersGrid() {
         const grid = document.getElementById('step-masters-grid');
         if (!grid) return;
+        
         let masters = state.serviceId
             ? (mastersByService[state.serviceId] || []).map(id => MASTERS_DATA[id]).filter(Boolean)
             : Object.values(MASTERS_DATA).filter(m => m.category === state.context.section || state.context.section === 'all');
+        
         grid.innerHTML = masters.map(m => `
             <div class="booking-master" data-master-id="${m.id}">
                 <div class="booking-master__avatar"><img src="${m.image || 'assets/images/placeholder.jpg'}" alt="${m.name}"></div>
@@ -725,6 +725,7 @@ const StepMode = {
                 <div class="booking-master__select"></div>
             </div>
         `).join('');
+        
         grid.querySelectorAll('.booking-master').forEach(el => {
             el.addEventListener('click', () => {
                 grid.querySelectorAll('.booking-master').forEach(m => m.classList.remove('selected'));
@@ -732,6 +733,21 @@ const StepMode = {
                 state.masterId = el.dataset.masterId;
             });
         });
+        
+        // Если есть предустановленный мастер — выбираем его
+        if (state.context.presetMasterId) {
+    setTimeout(() => {
+        const presetEl = document.querySelector(`.booking-master[data-master-id="${state.context.presetMasterId}"]`);
+        if (presetEl) {
+            presetEl.click();
+            // Переходим к следующему шагу
+            setTimeout(() => {
+                const nextBtn = document.querySelector('.btn-next[data-next="3"]');
+                if (nextBtn) nextBtn.click();
+            }, 200);
+        }
+    }, 100);
+}
     },
 
     renderDays() {
@@ -745,15 +761,18 @@ const StepMode = {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         daysGrid.innerHTML = days.map(day => {
+            if (day.isEmpty || !day.date) {
+                return `<div class="time-calendar__day empty"></div>`;
+            }
+            const dayDate = new Date(day.date);
+            dayDate.setHours(0, 0, 0, 0);
             const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
-            const isPast = day.date < today;
+            const isPast = dayDate < today;
             const isSelected = state.selectedDate && formatDate(day.date) === formatDate(state.selectedDate);
-            const isCurrentMonth = day.isCurrentMonth;
             let classes = 'time-calendar__day';
             if (isSelected) classes += ' selected';
-            if (isPast && isCurrentMonth) classes += ' disabled';
-            if (!isCurrentMonth) classes += ' other-month';
-            if (isWeekend && isCurrentMonth) classes += ' weekend';
+            if (isPast) classes += ' disabled';
+            if (isWeekend) classes += ' weekend';
             return `<div class="${classes}" data-date="${formatDate(day.date)}">${day.date.getDate()}</div>`;
         }).join('');
         daysGrid.querySelectorAll('.time-calendar__day:not(.disabled)').forEach(el => {
@@ -773,43 +792,21 @@ const StepMode = {
         });
     },
 
-renderSlots() {
-    const slotsGrid = document.getElementById('full-slots-grid');
-    if (!slotsGrid) return;
-    
-    slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
-        const isDisabled = state.busySlots.has(slot);
-        const isSelected = state.selectedTime === slot;
-        
-
-        let isInRange = false;
-        if (state.selectedTime) {
-            const [selectedHour, selectedMinute] = state.selectedTime.split(':').map(Number);
-            const [currentHour, currentMinute] = slot.split(':').map(Number);
-            
-            const selectedMinutes = selectedHour * 60 + selectedMinute;
-            const currentMinutes = currentHour * 60 + currentMinute;
-            
-            if (currentMinutes >= selectedMinutes && currentMinutes <= selectedMinutes + 45) {
-                isInRange = true;
-            }
-        }
-        
-        let classes = 'time-calendar__slot';
-        if (isSelected) classes += ' selected';
-        if (isDisabled) classes += ' disabled';
-        if (isInRange && !isSelected && !isDisabled) classes += ' in-range';
-        
-        return `<div class="${classes}" data-time="${slot}">${slot}</div>`;
-    }).join('');
-    
-    slotsGrid.querySelectorAll('.time-calendar__slot:not(.disabled)').forEach(el => {
-        el.addEventListener('click', () => {
-            const clickedTime = el.dataset.time;
-            state.selectedTime = clickedTime;
-            this.renderSlots();
+    renderSlots() {
+        const slotsGrid = document.getElementById('step-slots-grid');
+        if (!slotsGrid) return;
+        slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
+            const isDisabled = state.busySlots.has(slot);
+            const isSelected = state.selectedTime === slot;
+            return `<div class="time-calendar__slot ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}" data-time="${slot}">${slot}</div>`;
+        }).join('');
+        slotsGrid.querySelectorAll('.time-calendar__slot:not(.disabled)').forEach(el => {
+            el.addEventListener('click', () => {
+                slotsGrid.querySelectorAll('.time-calendar__slot').forEach(s => s.classList.remove('selected'));
+                el.classList.add('selected');
+                state.selectedTime = el.dataset.time;
+            });
         });
-    });
     },
 
     initTimeCalendar() {
@@ -963,8 +960,17 @@ export function initBookingForm() {
     if (!modal) return;
 
     window.openBookingModal = (context = {}) => {
+        console.log('openBookingModal called with:', context);
+        
         state.context = { ...state.context, ...context };
-        state.mode = state.context.source === 'nav' ? 'full' : 'step';
+        
+        // Определяем режим
+        if (state.context.source === 'nav') {
+            state.mode = 'full';
+        } else {
+            state.mode = 'step';
+        }
+        
         state.serviceId = state.context.presetServiceId || null;
         state.masterId = state.context.presetMasterId || null;
         state.busySlots = new Set();
@@ -1016,10 +1022,18 @@ function attachGlobalButtons() {
 function handleGlobalClick(e) {
     e.preventDefault();
     const btn = e.currentTarget;
+    
+    let source = 'hero';
+    if (btn.classList.contains('nav__link--primary')) {
+        source = 'nav';
+    } else if (btn.classList.contains('price__book')) {
+        source = 'price';
+    }
+    
     window.openBookingModal({
-        masterId: btn.getAttribute('data-master-id'),
-        serviceId: btn.getAttribute('data-service-id'),
+        presetMasterId: btn.getAttribute('data-master-id'),
+        presetServiceId: btn.getAttribute('data-service-id'),
         section: btn.getAttribute('data-section') || 'all',
-        source: btn.classList.contains('nav__link--primary') ? 'nav' : 'hero'
+        source: source
     });
 }

@@ -1,172 +1,135 @@
-const GALLERY_IMAGES = {
-    tattoo: [
-        { src: 'assets/images/portfolio/tattoo-1.jpg', category: 'Реализм' },
-        { src: 'assets/images/portfolio/tattoo-2.jpg', category: 'Графика' },
-        { src: 'assets/images/portfolio/tattoo-3.jpg', category: 'Олдскул' },
-        { src: 'assets/images/portfolio/tattoo-4.jpg', category: 'Минимализм' },
-        { src: 'assets/images/portfolio/tattoo-5.jpg', category: 'Биомеханика' },
-        { src: 'assets/images/portfolio/tattoo-6.jpg', category: 'Треш-полька' }
-    ],
-    barber: [
-        { src: 'assets/images/portfolio/barber-1.jpg', category: 'Стрижки' },
-        { src: 'assets/images/portfolio/barber-2.jpg', category: 'Борода' },
-        { src: 'assets/images/portfolio/barber-3.jpg', category: 'Бритьё' },
-        { src: 'assets/images/portfolio/barber-4.jpg', category: 'Укладка' },
-        { src: 'assets/images/portfolio/barber-5.jpg', category: 'Стрижки' },
-        { src: 'assets/images/portfolio/barber-6.jpg', category: 'Борода' }
-    ]
-};
+export function initGallery() {
+    console.log('Initializing galleries with GSAP...');
 
+    // Проверяем, загружен ли GSAP
+    if (typeof gsap === 'undefined') {
+        console.warn('GSAP not loaded, using fallback animations');
+        createPlaceholdersWithoutGSAP();
+        return;
+    }
 
-let currentImages = GALLERY_IMAGES.tattoo;
-let currentFilter = 'all';
+    // Создаём заглушки для всех трёх галерей с GSAP
+    createPlaceholdersWithGSAP('tattoo-portfolio-grid', 'Тату');
+    createPlaceholdersWithGSAP('barber-portfolio-grid', 'Барбершоп');
+    createPlaceholdersWithGSAP('piercing-portfolio-grid', 'Пирсинг');
+}
 
-// Функция для отрисовки галереи
-export function renderGallery(containerId, images) {
+function createPlaceholdersWithGSAP(containerId, categoryName) {
     const container = document.getElementById(containerId);
     if (!container) return;
-    
-    const filteredImages = currentFilter === 'all' 
-        ? images 
-        : images.filter(img => img.category === currentFilter);
-    
-    container.innerHTML = filteredImages.map((img, index) => `
-        <div class="portfolio__item" data-index="${index}">
-            <img src="${img.src}" 
-                alt="Portfolio image" 
-                class="portfolio__image"
-                loading="lazy"
-                onerror="this.src='assets/images/placeholder.jpg'">
-            <div class="portfolio__overlay">
-                <div class="portfolio__info">
-                    <span class="portfolio__category">${img.category}</span>
+
+    container.innerHTML = '';
+
+    // Создаём 6 карточек для каждой галереи
+    const items = [];
+    for (let i = 1; i <= 6; i++) {
+        items.push(`
+            <div class="portfolio__item placeholder-item" data-category="${categoryName}">
+                <div class="portfolio__image placeholder-bg">
+                    <div class="placeholder-content">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#c9a227" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <span>Пример работы</span>
+                        <small>Место для вашего фото</small>
+                    </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        `);
+    }
+
+    container.innerHTML = items.join('');
+
+    // GSAP анимация: карточки появляются каскадом с эффектом "выезжания" снизу
+    const portfolioItems = container.querySelectorAll('.portfolio__item');
     
-    container.querySelectorAll('.portfolio__item').forEach(item => {
-        item.addEventListener('click', () => {
-            const index = parseInt(item.dataset.index);
-            openLightbox(filteredImages, index);
+    // Устанавливаем начальное состояние (невидимые и смещённые вниз)
+    gsap.set(portfolioItems, {
+        opacity: 0,
+        y: 60,
+        scale: 0.9
+    });
+
+    // Создаём ScrollTrigger для каждой карточки с задержкой
+    portfolioItems.forEach((item, index) => {
+        gsap.to(item, {
+            scrollTrigger: {
+                trigger: item,
+                start: 'top 85%',
+                toggleActions: 'play none none reverse',
+                // Немного задержки для каскадного эффекта
+                onEnter: () => {
+                    gsap.to(item, {
+                        opacity: 1,
+                        y: 0,
+                        scale: 1,
+                        duration: 0.6,
+                        delay: index * 0.08,
+                        ease: 'back.out(0.4)',
+                        overwrite: true
+                    });
+                },
+                onLeaveBack: () => {
+                    gsap.to(item, {
+                        opacity: 0,
+                        y: 60,
+                        scale: 0.9,
+                        duration: 0.4,
+                        ease: 'power2.in',
+                        overwrite: true
+                    });
+                }
+            }
         });
     });
 }
 
-export function renderFilters(containerId, categories) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
+// Fallback без GSAP (на всякий случай)
+function createPlaceholdersWithoutGSAP() {
+    const containers = ['tattoo-portfolio-grid', 'barber-portfolio-grid', 'piercing-portfolio-grid'];
     
-    const filterButtons = ['all', ...new Set(categories)];
-    
-    container.innerHTML = filterButtons.map(filter => `
-        <button class="portfolio__filter ${filter === currentFilter ? 'portfolio__filter--active' : ''}" 
-                data-filter="${filter}">
-            ${filter === 'all' ? 'Все работы' : filter}
-        </button>
-    `).join('');
-    
-    container.querySelectorAll('.portfolio__filter').forEach(btn => {
-        btn.addEventListener('click', () => {
-            currentFilter = btn.dataset.filter;
-            
-            container.querySelectorAll('.portfolio__filter').forEach(b => {
-                b.classList.remove('portfolio__filter--active');
-            });
-            btn.classList.add('portfolio__filter--active');
-            
-            renderGallery('portfolio-grid', currentImages);
-        });
-    });
-}
-
-// Функция для открытия лайтбокса
-function openLightbox(images, startIndex) {
-    let lightbox = document.getElementById('portfolio-lightbox');
-    
-    if (!lightbox) {
-        lightbox = document.createElement('div');
-        lightbox.id = 'portfolio-lightbox';
-        lightbox.className = 'portfolio-modal';
-        lightbox.innerHTML = `
-            <div class="portfolio-modal__content">
-                <button class="portfolio-modal__close">&times;</button>
-                <img src="" alt="" class="portfolio-modal__image">
-                <button class="portfolio-modal__prev">❮</button>
-                <button class="portfolio-modal__next">❯</button>
-            </div>
-        `;
-        document.body.appendChild(lightbox);
-    }
-    
-    const img = lightbox.querySelector('.portfolio-modal__image');
-    const closeBtn = lightbox.querySelector('.portfolio-modal__close');
-    const prevBtn = lightbox.querySelector('.portfolio-modal__prev');
-    const nextBtn = lightbox.querySelector('.portfolio-modal__next');
-    
-    let currentIndex = startIndex;
-    
-    function showImage(index) {
-        if (index >= 0 && index < images.length) {
-            img.src = images[index].src;
-            currentIndex = index;
-        }
-    }
-    
-    showImage(currentIndex);
-    lightbox.classList.add('portfolio-modal--active');
-    document.body.style.overflow = 'hidden';
-    
-    closeBtn.onclick = () => {
-        lightbox.classList.remove('portfolio-modal--active');
-        document.body.style.overflow = '';
-    };
-    
-    prevBtn.onclick = () => showImage(currentIndex - 1);
-    nextBtn.onclick = () => showImage(currentIndex + 1);
-    
-    document.addEventListener('keydown', function handler(e) {
-        if (e.key === 'Escape') {
-            lightbox.classList.remove('portfolio-modal--active');
-            document.body.style.overflow = '';
-            document.removeEventListener('keydown', handler);
-        }
-    });
-}
-
-// Инициализация галереи
-export function initGallery() {
-    console.log('Initializing gallery');
-
-    const portfolioGrid = document.getElementById('portfolio-grid');
-    const portfolioFilters = document.getElementById('portfolio-filters');
-    
-    if (!portfolioGrid) return;
-    
-
-    const currentService = localStorage.getItem('preferredService') || 'tattoo';
-    currentImages = GALLERY_IMAGES[currentService] || GALLERY_IMAGES.tattoo;
-    
-
-    const categories = currentImages.map(img => img.category);
-    
-
-    if (portfolioFilters) {
-        renderFilters('portfolio-filters', categories);
-    }
-    
-
-    renderGallery('portfolio-grid', currentImages);
-    
-    // Слушаем смену сервиса
-    window.addEventListener('serviceChanged', (e) => {
-        currentImages = GALLERY_IMAGES[e.detail.service] || GALLERY_IMAGES.tattoo;
-        currentFilter = 'all';
+    containers.forEach(containerId => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
         
-        const categories = currentImages.map(img => img.category);
-        if (portfolioFilters) {
-            renderFilters('portfolio-filters', categories);
+        container.innerHTML = '';
+        for (let i = 1; i <= 6; i++) {
+            container.innerHTML += `
+                <div class="portfolio__item placeholder-item">
+                    <div class="portfolio__image placeholder-bg">
+                        <div class="placeholder-content">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#c9a227" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span>Пример работы</span>
+                            <small>Место для вашего фото</small>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
-        renderGallery('portfolio-grid', currentImages);
+        
+        const items = container.querySelectorAll('.portfolio__item');
+        items.forEach((item, index) => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateY(30px)';
+            item.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.2 });
+            
+            observer.observe(item);
+        });
     });
 }

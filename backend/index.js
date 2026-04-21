@@ -13,12 +13,19 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '..')));
 
 
-app.get('/api/admin/bookings', async (req, res) => {
+app.get('/api/bookings/check', async (req, res) => {
     try {
-        const bookings = await getAllBookings();
-        res.json(bookings);
+        const { master, date } = req.query;
+        console.log('🔍 Проверка слотов:', { master, date });
+        
+        const result = await pool.query(
+            `SELECT time FROM bookings WHERE master = $1 AND date = $2`,
+            [master, date]
+        );
+        const times = result.rows.map(row => row.time);
+        res.json({ times });
     } catch (err) {
-        console.error(' Ошибка получения:', err);
+        console.error('❌ Ошибка проверки:', err);
         res.status(500).json({ error: 'Ошибка базы данных' });
     }
 });

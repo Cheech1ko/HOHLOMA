@@ -5,6 +5,19 @@ const pool = new Pool({
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
+async function addColumnIfNotExists() {
+    try {
+        await pool.query(`ALTER TABLE bookings ADD COLUMN email TEXT`);
+        console.log('✅ Колонка email добавлена');
+    } catch (err) {
+        if (err.message.includes('duplicate column') || err.message.includes('already exists')) {
+            console.log('⚠️ Колонка email уже существует');
+        } else {
+            console.error('❌ Ошибка добавления email:', err.message);
+        }
+    }
+}
+
 async function initDB() {
     const query = `
         CREATE TABLE IF NOT EXISTS bookings (
@@ -23,12 +36,8 @@ async function initDB() {
     `;
     await pool.query(query);
     
-    try {
-        await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS email TEXT`);
-        console.log('✅ Колонка email добавлена');
-    } catch (err) {
-        console.error('Ошибка добавления email:', err.message);
-    }
+    await addColumnIfNotExists();
+    
     try {
         await pool.query(`ALTER TABLE bookings ADD COLUMN status TEXT DEFAULT 'new'`);
         console.log('✅ Колонка status добавлена');
@@ -37,8 +46,11 @@ async function initDB() {
             console.error('Ошибка добавления status:', err.message);
         }
     }
+    
     console.log('✅ База данных PostgreSQL готова');
 }
+
+initDB();
 
 async function saveBooking(booking) {
     const { name, phone, email, service, master, masterLevel, date, time, price, comment, createdAt } = booking;
@@ -53,8 +65,7 @@ async function saveBooking(booking) {
 }
 
 async function getAllBookings() {
-    const query = `SELECT * FROM bookings ORDER BY id DESC`;
-    const result = await pool.query(query);
+    const result = await pool.query(`SELECT * FROM bookings ORDER BY id DESC`);
     return result.rows;
 }
 

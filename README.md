@@ -92,7 +92,8 @@ HOHLOMA/
 cd e2e-tests
 npx playwright test
 
-Деплой
+
+## Деплой
 Компонент	Платформа	Ссылка
 Фронтенд	GitHub Pages	cheech1ko.github.io/HOHLOMA
 Бэкенд	Render	hohloma-backend.onrender.com

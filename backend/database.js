@@ -31,7 +31,14 @@ async function initDB() {
             console.error('Ошибка добавления status:', err.message);
         }
     }
-    
+    try {
+        await pool.query(`ALTER TABLE bookings ADD COLUMN email TEXT`);
+        console.log('✅ Колонка email добавлена');
+    } catch (err) {
+        if (!err.message.includes('duplicate column')) {
+            console.error('Ошибка добавления email:', err.message);
+        }
+    }
     console.log('✅ База данных PostgreSQL готова');
 }
 

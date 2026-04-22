@@ -9,6 +9,7 @@ let state = {
     selectedTime: null,
     currentMonth: new Date(),
     mode: 'full',
+    email: null,
     context: { presetMasterId: null, presetServiceId: null, section: 'all', source: 'nav' }
 };
 
@@ -228,7 +229,7 @@ const Templates = {
             </div>
             <div class="booking-footer">
                 <button class="booking-footer__btn" id="start-next">Далее</button>
-                <div class="booking-footer__powered">Онлайн-запись: программа Арника</div>
+                <div class="booking-footer__powered">Онлайн-запись</div>
             </div>
         </div>
         <div id="full-service" style="display:none;">
@@ -277,6 +278,7 @@ const Templates = {
             <div class="form-row">
                 <div class="form-group"><label>Имя</label><input type="text" id="name" class="form-input" placeholder="Имя"></div>
                 <div class="form-group"><label>Телефон</label><input type="tel" id="phone" class="form-input" placeholder="+7 (___) ___-__-__"></div>
+                <div class="form-group"><label>Email *</label><input type="email" id="email" class="form-input" placeholder="example@mail.ru" required></div>
             </div>
             <div class="form-group"><label>Комментарий</label><textarea id="comment" class="form-textarea" rows="3"></textarea></div>
             <div class="form-group--policy"><input type="checkbox" id="policy" checked><label>Я согласен на обработку персональных данных</label></div>
@@ -314,7 +316,12 @@ const Templates = {
                 <button class="btn btn--primary" id="step-time-next">Далее</button>
             </div>
         </div>
-        <div class="booking-step" data-step="4" style="display:none;"><h3>Ваши данные</h3><div class="booking-summary" id="step-summary"></div><div class="form-row"><div class="form-group"><label>Имя</label><input type="text" id="step-name" class="form-input" placeholder="Имя"></div><div class="form-group"><label>Телефон</label><input type="tel" id="step-phone" class="form-input" placeholder="+7 (___) ___-__-__"></div></div><div class="form-group"><label>Комментарий</label><textarea id="step-comment" class="form-textarea" rows="3"></textarea></div><div class="form-group--policy"><input type="checkbox" id="step-policy" checked><label>Я согласен на обработку персональных данных</label></div><div class="booking-step__actions"><button class="btn btn--outline btn-prev" data-prev="3">Назад</button><button class="btn btn--primary" id="step-submit">Записаться</button></div></div>
+        <div class="booking-step" data-step="4" style="display:none;"><h3>Ваши данные</h3>
+        <div class="booking-summary" id="step-summary"></div><div class="form-row"><div class="form-group"><label>Имя</label><input type="text" id="step-name" class="form-input" placeholder="Имя">
+        </div><div class="form-group"><label>Телефон</label><input type="tel" id="step-phone" class="form-input" placeholder="+7 (___) ___-__-__"></div></div>
+        <div class="form-group"><label>Email *</label><input type="email" id="email" class="form-input" placeholder="example@mail.ru" required></div>
+        <div class="form-group"><label>Комментарий</label><textarea id="step-comment" class="form-textarea" rows="3"></textarea></div><div class="form-group--policy"><input type="checkbox" id="step-policy" checked><label>Я согласен на обработку персональных данных</label></div>
+        <div class="booking-step__actions"><button class="btn btn--outline btn-prev" data-prev="3">Назад</button><button class="btn btn--primary" id="step-submit">Записаться</button></div></div>
     `
 };
 
@@ -511,6 +518,8 @@ renderSlots() {
     async submit() {
         const name = document.getElementById('name')?.value;
         const phone = document.getElementById('phone')?.value;
+        const email = document.getElementById('email')?.value;
+        state.email = email;
         const comment = document.getElementById('comment')?.value || '';
         if (!name || !phone || !state.serviceId || !state.masterId || !state.selectedDate || !state.selectedTime) {
             showNotification('Заполните все поля');
@@ -520,9 +529,11 @@ renderSlots() {
             showNotification('Введите корректный номер телефона');
             return;
         }
+        if (!email) { showNotification('Введите email'); return; }
         const master = MASTERS_DATA[state.masterId];
         const booking = {
-            name, phone, service: getServiceName(state.serviceId), master: master?.name || state.masterId,
+            name, phone, email,
+            service: getServiceName(state.serviceId), master: master?.name || state.masterId,
             masterLevel: master?.specialty || '', date: formatDate(state.selectedDate), time: state.selectedTime,
             price: getTotalPrice(), comment, createdAt: new Date().toISOString()
         };
@@ -562,6 +573,8 @@ renderSlots() {
         state.busySlots = new Set();
         state.weekendSurcharge = 0;
         state.currentMonth = new Date();
+        state.email = null;
+        document.getElementById('email').value = '';
         ['name', 'phone', 'comment'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
@@ -909,6 +922,7 @@ renderSlots() {
     async submit() {
         const name = document.getElementById('step-name')?.value;
         const phone = document.getElementById('step-phone')?.value;
+        const email = document.getElementById('email')?.value;
         const comment = document.getElementById('step-comment')?.value || '';
         if (!name || !phone || !state.serviceId || !state.masterId || !state.selectedDate || !state.selectedTime) {
             showNotification('Заполните все поля');
@@ -918,9 +932,14 @@ renderSlots() {
             showNotification('Введите корректный номер телефона');
             return;
         }
+        if (!email) {
+            showNotification('Введите email');
+            return;
+        }
         const master = MASTERS_DATA[state.masterId];
         const booking = {
-            name, phone, service: getServiceName(state.serviceId), master: master?.name || state.masterId,
+            name, phone, email,
+            service: getServiceName(state.serviceId), master: master?.name || state.masterId,
             masterLevel: master?.specialty || '', date: formatDate(state.selectedDate), time: state.selectedTime,
             price: getTotalPrice(), comment, createdAt: new Date().toISOString()
         };
@@ -1023,6 +1042,7 @@ export function initBookingForm() {
         state.busySlots = new Set();
         state.selectedDate = null;
         state.selectedTime = null;
+        state.email = null;
         state.weekendSurcharge = 0;
         state.currentMonth = new Date();
 

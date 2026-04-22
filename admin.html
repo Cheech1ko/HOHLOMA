@@ -247,6 +247,7 @@
                                 <th data-sort="id">ID</th>
                                 <th data-sort="name">Имя</th>
                                 <th data-sort="phone">Телефон</th>
+                                <th data-sort="email">Email</th>
                                 <th data-sort="service">Услуга</th>
                                 <th data-sort="master">Мастер</th>
                                 <th data-sort="date">Дата/время</th>
@@ -264,6 +265,7 @@
                         <td>${b.id}</td>
                         <td>${escapeHtml(b.name)}</td>
                         <td>${escapeHtml(b.phone)}</td>
+                        <td>${escapeHtml(b.email || '—')}</td>
                         <td>${escapeHtml(b.service)}</td>
                         <td>${escapeHtml(b.master)}</td>
                         <td>${b.date || ''} ${b.time || ''}</td>

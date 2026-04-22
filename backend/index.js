@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const nodemailer = require('nodemailer');
 const { saveBooking, getAllBookings, pool } = require('./database');
 
 const app = express();

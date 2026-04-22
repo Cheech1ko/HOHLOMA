@@ -519,7 +519,6 @@ renderSlots() {
         const name = document.getElementById('name')?.value;
         const phone = document.getElementById('phone')?.value;
         const email = document.getElementById('email')?.value;
-        state.email = email;
         const comment = document.getElementById('comment')?.value || '';
         if (!name || !phone || !state.serviceId || !state.masterId || !state.selectedDate || !state.selectedTime) {
             showNotification('Заполните все поля');

@@ -43,13 +43,13 @@ async function initDB() {
 }
 
 async function saveBooking(booking) {
-    const { name, phone, service, master, masterLevel, date, time, price, comment, createdAt } = booking;
+    const { name, phone, email, service, master, masterLevel, date, time, price, comment, createdAt } = booking;
     const query = `
-        INSERT INTO bookings (name, phone, service, master, masterLevel, date, time, price, comment, "createdAt")
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        INSERT INTO bookings (name, phone, email, service, master, masterLevel, date, time, price, comment, "createdAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id
     `;
-    const values = [name, phone, service, master, masterLevel, date, time, price, comment, createdAt];
+    const values = [name, phone, email, service, master, masterLevel, date, time, price, comment, createdAt];
     const result = await pool.query(query, values);
     return { id: result.rows[0].id };
 }

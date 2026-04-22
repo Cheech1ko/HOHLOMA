@@ -96,6 +96,7 @@ app.get('/api/admin/bookings', async (req, res) => {
 app.post('/api/bookings', async (req, res) => {
     try {
         const booking = req.body;
+        console.log('📝 Email в заявке:', booking.email);
         console.log(' Новая заявка:', booking);
 
         const checkResult = await pool.query(

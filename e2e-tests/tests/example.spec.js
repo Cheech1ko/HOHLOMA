@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { faker } from '@faker-js/faker';
 
 test('Успешная запись через форму из навбара', async ({page}) => {
   await page.goto('http://localhost:5500');

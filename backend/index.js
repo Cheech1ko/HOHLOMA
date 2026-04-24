@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { Pool } = require('pg');
 const path = require('path');
 const nodemailer = require('nodemailer');
 const { saveBooking, getAllBookings, pool } = require('./database');
@@ -111,17 +112,26 @@ app.get('/api/admin/bookings', async (req, res) => {
 app.get('/api/nearest-slots', async (req, res) => {
     try {
         const { masterId } = req.query;
-        const masterName = MASTERS_DATA[masterId]?.name || masterId;
+        const master = MASTERS_DATA[masterId];
+        const masterName = master?.name || masterId;
         
         const today = new Date();
         const nextWeek = new Date();
         nextWeek.setDate(today.getDate() + 7);
         
+        const formatForDB = (date) => {
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}.${month}.${year}`;
+        };
+        
+        // Получаем занятые слоты
         const busyResult = await pool.query(
             `SELECT date, time FROM bookings 
                 WHERE master = $1 
                 AND date >= $2 AND date <= $3`,
-            [masterName, formatDate(today), formatDate(nextWeek)]
+            [masterName, formatForDB(today), formatForDB(nextWeek)]
         );
         
         const busySet = new Set(busyResult.rows.map(r => `${r.date}|${r.time}`));
@@ -130,7 +140,7 @@ app.get('/api/nearest-slots', async (req, res) => {
         for (let i = 0; i <= 7; i++) {
             const date = new Date();
             date.setDate(today.getDate() + i);
-            const dateStr = formatDate(date);
+            const dateStr = formatForDB(date);
             if (date < today) continue;
             
             for (let hour = 10; hour <= 19; hour++) {
@@ -150,6 +160,7 @@ app.get('/api/nearest-slots', async (req, res) => {
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
+
 app.post('/api/bookings', async (req, res) => {
     try {
         const booking = req.body;

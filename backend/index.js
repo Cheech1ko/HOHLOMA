@@ -7,6 +7,21 @@ const { saveBooking, getAllBookings, pool } = require('./database');
 const app = express();
 const port = process.env.PORT || 3001;
 
+
+const MASTERS_DATA = {
+    'daniil-tattoo': { name: 'Даниил Грачёв' },
+    'anastasia-tattoo': { name: 'Анастасия Шиндина' },
+    'yuri-tattoo': { name: 'Юрий Манохин' },
+    'vladimir-barber': { name: 'Владимир' },
+    'kirill-barber': { name: 'Кирилл' },
+    'evgeniy-barber': { name: 'Евгений' },
+    'maxim-barber': { name: 'Максим' },
+    'arianna-barber': { name: 'Арианна' },
+    'victoria-piercing': { name: 'Виктория Томс' },
+    'alexey-piercing': { name: 'Алексей Бобров' },
+    'alexey-massage': { name: 'Алексей Авакумов' }
+};
+
 app.use(cors({
     origin: ['http://127.0.0.1:5500', 'http://localhost:5500', 'https://cheech1ko.github.io']
 }));
@@ -104,8 +119,8 @@ app.get('/api/nearest-slots', async (req, res) => {
         
         const busyResult = await pool.query(
             `SELECT date, time FROM bookings 
-             WHERE master = $1 
-             AND date >= $2 AND date <= $3`,
+                WHERE master = $1 
+                AND date >= $2 AND date <= $3`,
             [masterName, formatDate(today), formatDate(nextWeek)]
         );
         

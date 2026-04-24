@@ -93,6 +93,48 @@ app.get('/api/admin/bookings', async (req, res) => {
     }
 });
 
+app.get('/api/nearest-slots', async (req, res) => {
+    try {
+        const { masterId } = req.query;
+        const masterName = MASTERS_DATA[masterId]?.name || masterId;
+        
+        const today = new Date();
+        const nextWeek = new Date();
+        nextWeek.setDate(today.getDate() + 7);
+        
+        const busyResult = await pool.query(
+            `SELECT date, time FROM bookings 
+             WHERE master = $1 
+             AND date >= $2 AND date <= $3`,
+            [masterName, formatDate(today), formatDate(nextWeek)]
+        );
+        
+        const busySet = new Set(busyResult.rows.map(r => `${r.date}|${r.time}`));
+        
+        const allSlots = [];
+        for (let i = 0; i <= 7; i++) {
+            const date = new Date();
+            date.setDate(today.getDate() + i);
+            const dateStr = formatDate(date);
+            if (date < today) continue;
+            
+            for (let hour = 10; hour <= 19; hour++) {
+                for (let minute = 0; minute < 60; minute += 15) {
+                    const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                    if (!busySet.has(`${dateStr}|${timeStr}`)) {
+                        allSlots.push({ date: dateStr, time: timeStr });
+                    }
+                }
+            }
+        }
+        
+        const nearestSlots = allSlots.slice(0, 3);
+        res.json({ slots: nearestSlots });
+    } catch (err) {
+        console.error('❌ Ошибка получения слотов:', err);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
 app.post('/api/bookings', async (req, res) => {
     try {
         const booking = req.body;

@@ -107,7 +107,6 @@ function getBlockedSlots(busyTimes) {
     busyTimes.forEach(time => {
         const [hour, minute] = time.split(':').map(Number);
         
-        // Находим начальную минуту слота (0, 15, 30, 45)
         const startMinute = Math.floor(minute / 15) * 15;
         
         for (let i = 0; i < 4; i++) {
@@ -138,6 +137,17 @@ async function loadBusySlots(masterId, date) {
     }
 }
 
+async function loadNearestSlotsForMaster(masterId) {
+    try {
+        const response = await fetch(`${API_URL}/nearest-slots?masterId=${masterId}`);
+        const data = await response.json();
+        return data.slots || [];
+    } catch (error) {
+        console.error('❌ Ошибка загрузки ближайших слотов:', error);
+        return [];
+    }
+}
+
 function getAnyMasterId() {
     let masters = state.serviceId
         ? (mastersByService[state.serviceId] || []).map(id => MASTERS_DATA[id]).filter(Boolean)
@@ -160,6 +170,16 @@ function formatDate(date) {
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
     return `${day}.${month}.${year}`;
+}
+
+function formatDateShort(dateStr) {
+    const [day, month] = dateStr.split('.');
+    return `${day}.${month}`;
+}
+
+function parseDate(dateStr) {
+    const [day, month, year] = dateStr.split('.');
+    return new Date(year, month - 1, day);
 }
 
 function generateMonthDays(date) {
@@ -254,6 +274,10 @@ const Templates = {
                 <h3>Выберите дату и время</h3>
             </div>
             <div class="time-calendar">
+                <div class="price-preview" id="full-price-preview">
+                    <span> Итого: </span>
+                    <strong id="full-total-price-display">0 ₽</strong>
+                </div>
                 <div class="time-calendar__header">
                     <button class="time-calendar__prev" id="full-calendar-prev">‹</button>
                     <div class="time-calendar__month" id="full-calendar-month">Апрель 2026</div>
@@ -294,10 +318,27 @@ const Templates = {
             <div class="booking-steps__step" data-step="4"><span class="booking-steps__number">4</span><span class="booking-steps__label">Данные</span></div>
         </div>
         <div class="booking-step" data-step="1"><h3>Выберите услугу</h3><div class="booking-services__grid" id="step-services-grid"></div><div class="booking-step__actions"><button class="btn btn--primary btn-next" data-next="2">Далее</button></div></div>
-        <div class="booking-step" data-step="2" style="display:none;"><h3>Выберите мастера</h3><div class="booking-masters__grid" id="step-masters-grid"></div><div class="booking-step__actions"><button class="btn btn--outline btn-prev" data-prev="1">Назад</button><button class="btn btn--primary btn-next" data-next="3">Далее</button></div></div>
+        <div class="booking-step" data-step="2" style="display:none;">
+            <h3>Выберите мастера</h3>
+            <div class="booking-masters__grid" id="step-masters-grid"></div>
+            
+            <div id="step-master-slots-container" style="display: none; margin-top: 20px;">
+                <div class="slots-title"> Ближайшие свободные слоты:</div>
+                <div class="slots-buttons" id="step-nearest-slots-list"></div>
+            </div>
+            
+            <div class="booking-step__actions">
+                <button class="btn btn--outline btn-prev" data-prev="1">Назад</button>
+                <button class="btn btn--primary btn-next" data-next="3">Далее</button>
+            </div>
+        </div>
         <div class="booking-step" data-step="3" style="display:none;">
             <h3>Выберите дату и время</h3>
             <div class="time-calendar">
+                <div class="price-preview" id="step-price-preview-calendar">
+                    <span> Итого: </span>
+                    <strong id="step-calendar-price-display">0 ₽</strong>
+                </div>
                 <div class="time-calendar__header">
                     <button class="time-calendar__prev" id="step-calendar-prev">‹</button>
                     <div class="time-calendar__month" id="step-calendar-month">Апрель 2026</div>
@@ -316,12 +357,21 @@ const Templates = {
                 <button class="btn btn--primary" id="step-time-next">Далее</button>
             </div>
         </div>
-        <div class="booking-step" data-step="4" style="display:none;"><h3>Ваши данные</h3>
-        <div class="booking-summary" id="step-summary"></div><div class="form-row"><div class="form-group"><label>Имя</label><input type="text" id="step-name" class="form-input" placeholder="Имя">
-        </div><div class="form-group"><label>Телефон</label><input type="tel" id="step-phone" class="form-input" placeholder="+7 (___) ___-__-__"></div></div>
-        <div class="form-group"><label>Email *</label><input type="email" id="email" class="form-input" placeholder="example@mail.ru" required></div>
-        <div class="form-group"><label>Комментарий</label><textarea id="step-comment" class="form-textarea" rows="3"></textarea></div><div class="form-group--policy"><input type="checkbox" id="step-policy" checked><label>Я согласен на обработку персональных данных</label></div>
-        <div class="booking-step__actions"><button class="btn btn--outline btn-prev" data-prev="3">Назад</button><button class="btn btn--primary" id="step-submit">Записаться</button></div></div>
+        <div class="booking-step" data-step="4" style="display:none;">
+            <h3>Ваши данные</h3>
+            <div class="booking-summary" id="step-summary"></div>
+            <div class="form-row">
+                <div class="form-group"><label>Имя</label><input type="text" id="step-name" class="form-input" placeholder="Имя"></div>
+                <div class="form-group"><label>Телефон</label><input type="tel" id="step-phone" class="form-input" placeholder="+7 (___) ___-__-__"></div>
+            </div>
+            <div class="form-group"><label>Email *</label><input type="email" id="step-email" class="form-input" placeholder="example@mail.ru" required></div>
+            <div class="form-group"><label>Комментарий</label><textarea id="step-comment" class="form-textarea" rows="3"></textarea></div>
+            <div class="form-group--policy"><input type="checkbox" id="step-policy" checked><label>Я согласен на обработку персональных данных</label></div>
+            <div class="booking-step__actions">
+                <button class="btn btn--outline btn-prev" data-prev="3">Назад</button>
+                <button class="btn btn--primary" id="step-submit">Записаться</button>
+            </div>
+        </div>
     `
 };
 
@@ -331,6 +381,18 @@ const FullMode = {
             const el = document.getElementById(`full-${s}`);
             if (el) el.style.display = s === screen ? 'block' : 'none';
         });
+    },
+
+    updatePricePreview() {
+        const priceDisplay = document.getElementById('full-total-price-display');
+        if (!priceDisplay) return;
+        const totalPrice = getTotalPrice();
+        priceDisplay.textContent = `${totalPrice} ₽`;
+        let tooltip = `${getServicePrice(state.serviceId)} ₽ (база)`;
+        const masterSurcharge = getMasterSurcharge(state.masterId);
+        if (masterSurcharge > 0) tooltip += ` + ${masterSurcharge} ₽ (уровень мастера)`;
+        if (state.weekendSurcharge > 0) tooltip += ` + ${state.weekendSurcharge} ₽ (выходной)`;
+        priceDisplay.title = tooltip;
     },
 
     renderServices(services) {
@@ -347,6 +409,7 @@ const FullMode = {
                 grid.querySelectorAll('.booking-service').forEach(s => s.classList.remove('selected'));
                 el.classList.add('selected');
                 state.serviceId = el.dataset.serviceId;
+                FullMode.updatePricePreview();
             });
         });
     },
@@ -366,6 +429,7 @@ const FullMode = {
                 grid.querySelectorAll('.booking-master').forEach(m => m.classList.remove('selected'));
                 el.classList.add('selected');
                 state.masterId = el.dataset.masterId;
+                FullMode.updatePricePreview();
             });
         });
     },
@@ -423,47 +487,48 @@ const FullMode = {
                 const isWeekend = state.selectedDate.getDay() === 0 || state.selectedDate.getDay() === 6;
                 state.weekendSurcharge = isWeekend ? 200 : 0;
                 showWeekendNotice(isWeekend);
+                this.updatePricePreview();
             });
         });
     },
 
-renderSlots() {
-    const slotsGrid = document.getElementById('full-slots-grid');
-    if (!slotsGrid) return;
-    
-    slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
-        const isDisabled = state.busySlots.has(slot);
-        const isSelected = state.selectedTime === slot;
+    renderSlots() {
+        const slotsGrid = document.getElementById('full-slots-grid');
+        if (!slotsGrid) return;
         
-        // Проверяем, попадает ли слот в диапазон выбранного времени + 45 минут
-        let isInRange = false;
-        if (state.selectedTime && !isSelected) {
-            const [selectedHour, selectedMinute] = state.selectedTime.split(':').map(Number);
-            const [currentHour, currentMinute] = slot.split(':').map(Number);
-            const selectedMinutes = selectedHour * 60 + selectedMinute;
-            const currentMinutes = currentHour * 60 + currentMinute;
-            if (currentMinutes > selectedMinutes && currentMinutes <= selectedMinutes + 45) {
-                isInRange = true;
+        slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
+            const isDisabled = state.busySlots.has(slot);
+            const isSelected = state.selectedTime === slot;
+            
+            let isInRange = false;
+            if (state.selectedTime && !isSelected) {
+                const [selectedHour, selectedMinute] = state.selectedTime.split(':').map(Number);
+                const [currentHour, currentMinute] = slot.split(':').map(Number);
+                const selectedMinutes = selectedHour * 60 + selectedMinute;
+                const currentMinutes = currentHour * 60 + currentMinute;
+                if (currentMinutes > selectedMinutes && currentMinutes <= selectedMinutes + 45) {
+                    isInRange = true;
+                }
             }
-        }
+            
+            let classes = 'time-calendar__slot';
+            if (isSelected) classes += ' selected';
+            if (isDisabled) classes += ' disabled';
+            if (isInRange) classes += ' in-range';
+            
+            return `<div class="${classes}" data-time="${slot}">${slot}</div>`;
+        }).join('');
         
-        let classes = 'time-calendar__slot';
-        if (isSelected) classes += ' selected';
-        if (isDisabled) classes += ' disabled';
-        if (isInRange) classes += ' in-range';
-        
-        return `<div class="${classes}" data-time="${slot}">${slot}</div>`;
-    }).join('');
-    
-    slotsGrid.querySelectorAll('.time-calendar__slot:not(.disabled)').forEach(el => {
-        el.addEventListener('click', () => {
-            slotsGrid.querySelectorAll('.time-calendar__slot').forEach(s => s.classList.remove('selected'));
-            el.classList.add('selected');
-            state.selectedTime = el.dataset.time;
-            this.renderSlots(); 
+        slotsGrid.querySelectorAll('.time-calendar__slot:not(.disabled)').forEach(el => {
+            el.addEventListener('click', () => {
+                slotsGrid.querySelectorAll('.time-calendar__slot').forEach(s => s.classList.remove('selected'));
+                el.classList.add('selected');
+                state.selectedTime = el.dataset.time;
+                this.renderSlots();
+                this.updatePricePreview();
+            });
         });
-    });
-},
+    },
 
     initTimeCalendar() {
         this.renderDays();
@@ -484,6 +549,7 @@ renderSlots() {
                 this.renderDays();
             });
         }
+        this.updatePricePreview();
     },
 
     updateSummary() {
@@ -573,7 +639,7 @@ renderSlots() {
         state.weekendSurcharge = 0;
         state.currentMonth = new Date();
         state.email = null;
-        document.getElementById('email').value = '';
+        if (document.getElementById('email')) document.getElementById('email').value = '';
         ['name', 'phone', 'comment'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
@@ -697,15 +763,70 @@ const StepMode = {
 
     showStep(step) {
         this.currentStep = step;
-        document.querySelectorAll('.booking-step').forEach(el => el.style.display = el.dataset.step == step ? 'block' : 'none');
+        document.querySelectorAll('.booking-step').forEach(el => {
+            if (el.dataset.step == step) {
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+            }
+        });
         document.querySelectorAll('.booking-steps__step').forEach((el, i) => {
             el.classList.remove('active', 'completed');
             if (i + 1 < step) el.classList.add('completed');
             if (i + 1 === step) el.classList.add('active');
         });
         if (step === 2 && state.serviceId) this.initMastersGrid();
-        if (step === 3) this.initTimeCalendar();
+        if (step === 3) { 
+            this.initCalendar(); 
+            this.updateCalendarPricePreview();
+        }
         if (step === 4) this.updateSummary();
+    },
+
+    updatePricePreview(displayElementId) {
+        const priceDisplay = document.getElementById(displayElementId);
+        if (!priceDisplay) return;
+        const totalPrice = getTotalPrice();
+        priceDisplay.textContent = `${totalPrice} ₽`;
+        let tooltip = `${getServicePrice(state.serviceId)} ₽ (база)`;
+        const masterSurcharge = getMasterSurcharge(state.masterId);
+        if (masterSurcharge > 0) tooltip += ` + ${masterSurcharge} ₽ (уровень мастера)`;
+        if (state.weekendSurcharge > 0) tooltip += ` + ${state.weekendSurcharge} ₽ (выходной)`;
+        priceDisplay.title = tooltip;
+    },
+
+    updateCalendarPricePreview() {
+        this.updatePricePreview('step-calendar-price-display');
+    },
+
+    async showNearestSlotsForMaster(masterId) {
+        const slots = await loadNearestSlotsForMaster(masterId);
+        const container = document.getElementById('step-nearest-slots-list');
+        const slotsContainer = document.getElementById('step-master-slots-container');
+        
+        if (!container || !slotsContainer) return;
+        
+        if (slots.length > 0) {
+            container.innerHTML = slots.map(slot => `
+                <button class="slot-btn" data-date="${slot.date}" data-time="${slot.time}">
+                    ${formatDateShort(slot.date)} ${slot.time}
+                </button>
+            `).join('');
+            
+            container.querySelectorAll('.slot-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    state.selectedDate = parseDate(btn.dataset.date);
+                    state.selectedTime = btn.dataset.time;
+                    StepMode.updateSummary();
+                    StepMode.showStep(4);
+                });
+            });
+            slotsContainer.style.display = 'block';
+        } else {
+            slotsContainer.style.display = 'none';
+        }
+        this.updatePricePreview('step-total-price-display');
     },
 
     initServicesGrid() {
@@ -713,13 +834,9 @@ const StepMode = {
         if (!grid) return;
         
         let services = getServicesList();
-        
-        // Фильтруем по секции
         if (state.context.section !== 'all') {
             services = services.filter(s => s.category === state.context.section);
         }
-        
-        // Если есть предустановленный мастер — показываем только его услуги
         if (state.context.presetMasterId) {
             const masterServices = getMasterServices(state.context.presetMasterId);
             services = services.filter(s => masterServices.includes(s.id));
@@ -737,56 +854,81 @@ const StepMode = {
                 grid.querySelectorAll('.booking-service').forEach(s => s.classList.remove('selected'));
                 el.classList.add('selected');
                 state.serviceId = el.dataset.serviceId;
+                this.updatePricePreview('step-total-price-display');
             });
         });
         
-        // Если есть предустановленная услуга — выбираем её
         if (state.context.presetServiceId) {
             const presetEl = document.querySelector(`.booking-service[data-service-id="${state.context.presetServiceId}"]`);
-            if (presetEl) {
-                presetEl.click();
-            }
+            if (presetEl) presetEl.click();
         }
     },
 
-    initMastersGrid() {
-        const grid = document.getElementById('step-masters-grid');
-        if (!grid) return;
-        
-        let masters = state.serviceId
-            ? (mastersByService[state.serviceId] || []).map(id => MASTERS_DATA[id]).filter(Boolean)
-            : Object.values(MASTERS_DATA).filter(m => m.category === state.context.section || state.context.section === 'all');
-        
-        grid.innerHTML = masters.map(m => `
-            <div class="booking-master" data-master-id="${m.id}">
-                <div class="booking-master__avatar"><img src="${m.image || 'assets/images/placeholder.jpg'}" alt="${m.name}"></div>
-                <div class="booking-master__info"><h4>${m.name}</h4><p>${m.specialty || 'мастер'}</p><div>★★★★★ 5,0</div></div>
-                <div class="booking-master__select"></div>
+initMastersGrid() {
+    const grid = document.getElementById('step-masters-grid');
+    if (!grid) return;
+    
+    let masters = state.serviceId
+        ? (mastersByService[state.serviceId] || []).map(id => MASTERS_DATA[id]).filter(Boolean)
+        : Object.values(MASTERS_DATA).filter(m => m.category === state.context.section || state.context.section === 'all');
+    
+    grid.innerHTML = masters.map(m => `
+        <div class="booking-master" data-master-id="${m.id}">
+            <div class="booking-master__avatar"><img src="${m.image || 'assets/images/placeholder.jpg'}" alt="${m.name}"></div>
+            <div class="booking-master__info">
+                <h4>${m.name}</h4>
+                <p>${m.specialty || 'мастер'}</p>
+                <div>★★★★★ 5,0</div>
+                <div class="master-slots-container" id="slots-${m.id}" style="display: none; margin-top: 10px;">
+                    <div class="slots-title">🎯 Ближайшие слоты:</div>
+                    <div class="slots-buttons"></div>
+                </div>
             </div>
-        `).join('');
+            <div class="booking-master__select"></div>
+        </div>
+    `).join('');
+    
+    grid.querySelectorAll('.booking-master').forEach(async el => {
+        const masterId = el.dataset.masterId;
+        const slotsContainer = el.querySelector(`#slots-${masterId}`);
         
-        grid.querySelectorAll('.booking-master').forEach(el => {
-            el.addEventListener('click', () => {
-                grid.querySelectorAll('.booking-master').forEach(m => m.classList.remove('selected'));
-                el.classList.add('selected');
-                state.masterId = el.dataset.masterId;
-            });
+        if (slotsContainer) {
+            const slots = await loadNearestSlotsForMaster(masterId);
+            const slotsButtons = slotsContainer.querySelector('.slots-buttons');
+            
+            if (slots.length > 0) {
+                slotsButtons.innerHTML = slots.map(slot => `
+                    <button class="slot-btn" data-date="${slot.date}" data-time="${slot.time}">
+                        ${formatDateShort(slot.date)} ${slot.time}
+                    </button>
+                `).join('');
+                
+                slotsButtons.querySelectorAll('.slot-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        state.selectedDate = parseDate(btn.dataset.date);
+                        state.selectedTime = btn.dataset.time;
+                        StepMode.updateSummary();
+                        StepMode.showStep(4);
+                    });
+                });
+                slotsContainer.style.display = 'block';
+            }
+        }
+        
+        el.addEventListener('click', () => {
+            grid.querySelectorAll('.booking-master').forEach(m => m.classList.remove('selected'));
+            el.classList.add('selected');
+            state.masterId = masterId;
         });
-        
-        // Если есть предустановленный мастер — выбираем его
-        if (state.context.presetMasterId) {
-    setTimeout(() => {
+    });
+    
+    if (state.context.presetMasterId) {
         const presetEl = document.querySelector(`.booking-master[data-master-id="${state.context.presetMasterId}"]`);
         if (presetEl) {
             presetEl.click();
-            // Переходим к следующему шагу
-            setTimeout(() => {
-                const nextBtn = document.querySelector('.btn-next[data-next="3"]');
-                if (nextBtn) nextBtn.click();
-            }, 200);
         }
-    }, 100);
-}
+    }
     },
 
     renderDays() {
@@ -827,48 +969,50 @@ const StepMode = {
                 const isWeekend = state.selectedDate.getDay() === 0 || state.selectedDate.getDay() === 6;
                 state.weekendSurcharge = isWeekend ? 200 : 0;
                 showWeekendNotice(isWeekend);
+                this.updateCalendarPricePreview();
             });
         });
     },
 
-renderSlots() {
-    const slotsGrid = document.getElementById('step-slots-grid');
-    if (!slotsGrid) return;
-    
-    slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
-        const isDisabled = state.busySlots.has(slot);
-        const isSelected = state.selectedTime === slot;
+    renderSlots() {
+        const slotsGrid = document.getElementById('step-slots-grid');
+        if (!slotsGrid) return;
         
-        let isInRange = false;
-        if (state.selectedTime && !isSelected) {
-            const [selectedHour, selectedMinute] = state.selectedTime.split(':').map(Number);
-            const [currentHour, currentMinute] = slot.split(':').map(Number);
-            const selectedMinutes = selectedHour * 60 + selectedMinute;
-            const currentMinutes = currentHour * 60 + currentMinute;
-            if (currentMinutes > selectedMinutes && currentMinutes <= selectedMinutes + 45) {
-                isInRange = true;
+        slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
+            const isDisabled = state.busySlots.has(slot);
+            const isSelected = state.selectedTime === slot;
+            
+            let isInRange = false;
+            if (state.selectedTime && !isSelected) {
+                const [selectedHour, selectedMinute] = state.selectedTime.split(':').map(Number);
+                const [currentHour, currentMinute] = slot.split(':').map(Number);
+                const selectedMinutes = selectedHour * 60 + selectedMinute;
+                const currentMinutes = currentHour * 60 + currentMinute;
+                if (currentMinutes > selectedMinutes && currentMinutes <= selectedMinutes + 45) {
+                    isInRange = true;
+                }
             }
-        }
+            
+            let classes = 'time-calendar__slot';
+            if (isSelected) classes += ' selected';
+            if (isDisabled) classes += ' disabled';
+            if (isInRange) classes += ' in-range';
+            
+            return `<div class="${classes}" data-time="${slot}">${slot}</div>`;
+        }).join('');
         
-        let classes = 'time-calendar__slot';
-        if (isSelected) classes += ' selected';
-        if (isDisabled) classes += ' disabled';
-        if (isInRange) classes += ' in-range';
-        
-        return `<div class="${classes}" data-time="${slot}">${slot}</div>`;
-    }).join('');
-    
-    slotsGrid.querySelectorAll('.time-calendar__slot:not(.disabled)').forEach(el => {
-        el.addEventListener('click', () => {
-            slotsGrid.querySelectorAll('.time-calendar__slot').forEach(s => s.classList.remove('selected'));
-            el.classList.add('selected');
-            state.selectedTime = el.dataset.time;
-            this.renderSlots();
+        slotsGrid.querySelectorAll('.time-calendar__slot:not(.disabled)').forEach(el => {
+            el.addEventListener('click', () => {
+                slotsGrid.querySelectorAll('.time-calendar__slot').forEach(s => s.classList.remove('selected'));
+                el.classList.add('selected');
+                state.selectedTime = el.dataset.time;
+                this.renderSlots();
+                this.updateCalendarPricePreview();
+            });
         });
-    });
-},
+    },
 
-    initTimeCalendar() {
+    initCalendar() {
         this.renderDays();
         this.renderSlots();
         const prevBtn = document.getElementById('step-calendar-prev');
@@ -887,6 +1031,7 @@ renderSlots() {
                 this.renderDays();
             });
         }
+        this.updateCalendarPricePreview();
     },
 
     updateSummary() {
@@ -921,7 +1066,7 @@ renderSlots() {
     async submit() {
         const name = document.getElementById('step-name')?.value;
         const phone = document.getElementById('step-phone')?.value;
-        const email = document.getElementById('email')?.value;
+        const email = document.getElementById('step-email')?.value;
         const comment = document.getElementById('step-comment')?.value || '';
         if (!name || !phone || !state.serviceId || !state.masterId || !state.selectedDate || !state.selectedTime) {
             showNotification('Заполните все поля');
@@ -978,7 +1123,7 @@ renderSlots() {
         state.busySlots = new Set();
         state.weekendSurcharge = 0;
         state.currentMonth = new Date();
-        ['step-name', 'step-phone', 'step-comment'].forEach(id => {
+        ['step-name', 'step-phone', 'step-email', 'step-comment'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
@@ -992,20 +1137,22 @@ renderSlots() {
                 if (StepMode.currentStep === 3) {
                     if (!state.selectedDate || !state.selectedTime) { showNotification('Выберите дату и время'); return; }
                 }
+                let nextStep = parseFloat(btn.dataset.next);
                 if (StepMode.currentStep === 1 && state.masterId) {
-                    StepMode.showStep(3);
+                    StepMode.showStep(2);
                     return;
                 }
-                if (StepMode.currentStep === 2 && state.serviceId) {
-                    StepMode.showStep(3);
-                    return;
-                }
-                StepMode.showStep(StepMode.currentStep + 1);
+                StepMode.showStep(nextStep);
             });
         });
+        
         document.querySelectorAll('.btn-prev').forEach(btn => {
-            btn.addEventListener('click', () => StepMode.showStep(StepMode.currentStep - 1));
+            btn.addEventListener('click', () => {
+                let prevStep = parseFloat(btn.dataset.prev);
+                StepMode.showStep(prevStep);
+            });
         });
+        
         document.getElementById('step-time-next')?.addEventListener('click', () => {
             if (!state.selectedDate || !state.selectedTime) {
                 showNotification('Выберите дату и время');
@@ -1013,7 +1160,9 @@ renderSlots() {
             }
             StepMode.showStep(4);
         });
+        
         document.getElementById('step-submit')?.addEventListener('click', () => StepMode.submit());
+        
         StepMode.initServicesGrid();
         StepMode.initPhoneMask();
         StepMode.showStep(1);
@@ -1029,7 +1178,6 @@ export function initBookingForm() {
         
         state.context = { ...state.context, ...context };
         
-        // Определяем режим
         if (state.context.source === 'nav') {
             state.mode = 'full';
         } else {

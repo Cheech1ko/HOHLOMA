@@ -65,29 +65,17 @@ app.get('/api/nearest-slots', async (req, res) => {
         const master = MASTERS_DATA[masterId];
         const masterName = master?.name || masterId;
         
-        const now = new Date();
-const currentHour = now.getHours();
-const currentMinute = now.getMinutes();
-
-const filteredSlots = allSlots.filter(slot => {
-    const [slotHour, slotMinute] = slot.time.split(':').map(Number);
-    const [slotDay, slotMonth, slotYear] = slot.date.split('.').map(Number);
-    const slotDate = new Date(slotYear, slotMonth - 1, slotDay);
-    
-    // Если дата в прошлом — пропускаем
-    if (slotDate < now) return false;
-    
-    // Если сегодня — проверяем время
-    if (slotDate.toDateString() === now.toDateString()) {
-        return (slotHour > currentHour) || (slotHour === currentHour && slotMinute > currentMinute);
-    }
-    
-    return true;
-});
-
-const nearestSlots = filteredSlots.slice(0, 3);
+        const today = new Date();
+        const nextWeek = new Date();
+        nextWeek.setDate(today.getDate() + 7);
         
-        // Получаем занятые слоты
+        const formatForDB = (date) => {
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}.${month}.${year}`;
+        };
+        
         const busyResult = await pool.query(
             `SELECT date, time FROM bookings 
             WHERE master = $1 
@@ -114,7 +102,25 @@ const nearestSlots = filteredSlots.slice(0, 3);
             }
         }
         
-        const nearestSlots = allSlots.slice(0, 3);
+
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        
+        const filteredSlots = allSlots.filter(slot => {
+            const [slotDay, slotMonth, slotYear] = slot.date.split('.').map(Number);
+            const slotDate = new Date(slotYear, slotMonth - 1, slotDay);
+            
+            if (slotDate < now) return false;
+            if (slotDate.toDateString() === now.toDateString()) {
+                const [slotHour, slotMinute] = slot.time.split(':').map(Number);
+                return (slotHour > currentHour) || (slotHour === currentHour && slotMinute > currentMinute);
+            }
+            return true;
+        });
+        
+        const nearestSlots = filteredSlots.slice(0, 3);
+        
         res.json({ slots: nearestSlots });
     } catch (err) {
         console.error('❌ Ошибка получения слотов:', err);

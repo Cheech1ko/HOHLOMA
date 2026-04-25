@@ -15,113 +15,7 @@
     font-size: 1.2rem;
 }
 
-.flatpickr-calendar {
-    background: var(--color-dark) !important;
-    border: 1px solid var(--color-gold) !important;
-    border-radius: var(--border-radius) !important;
-    box-shadow: var(--shadow-lg) !important;
-    font-family: var(--font-main) !important;
-}
 
-/* Заголовок месяца */
-.flatpickr-months {
-    background: var(--color-black) !important;
-    border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
-    padding: 10px 0 !important;
-}
-
-.flatpickr-month {
-    color: var(--color-gold) !important;
-    font-size: 1.1rem !important;
-    font-weight: 600 !important;
-}
-
-/* Стрелки навигации */
-.flatpickr-prev-month,
-.flatpickr-next-month {
-    fill: var(--color-gold) !important;
-}
-
-.flatpickr-prev-month:hover,
-.flatpickr-next-month:hover {
-    fill: var(--color-gold-light) !important;
-}
-
-/* Дни недели */
-.flatpickr-weekday {
-    color: var(--color-gold) !important;
-    font-weight: 600 !important;
-    font-size: 0.9rem !important;
-    background: var(--color-dark) !important;
-}
-
-/* Общий стиль для всех дней */
-.flatpickr-day {
-    color: var(--color-white) !important;
-    border-radius: 50% !important;
-    transition: all 0.2s ease !important;
-    font-weight: 500 !important;
-}
-
-/* Доступные дни (будущие) */
-.flatpickr-day:not(.disabled):not(.prevMonthDay):not(.nextMonthDay) {
-    color: var(--color-white) !important;
-    background: transparent !important;
-}
-
-/* Доступные дни при наведении */
-.flatpickr-day:not(.disabled):not(.prevMonthDay):not(.nextMonthDay):hover {
-    background: var(--color-gray) !important;
-    border-color: var(--color-gold) !important;
-}
-
-/* ========== НЕДОСТУПНЫЕ ДНИ (ПРОШЕДШИЕ) ========== */
-.flatpickr-day.disabled,
-.flatpickr-day.disabled:hover,
-.flatpickr-day.prevMonthDay,
-.flatpickr-day.nextMonthDay {
-    color: #555 !important;          /* Серый цвет текста */
-    background: transparent !important;
-    border-color: transparent !important;
-    cursor: not-allowed !important;
-    opacity: 0.5 !important;
-    text-decoration: line-through !important;  /* Зачёркивание для наглядности */
-}
-
-/* Выбранный день */
-.flatpickr-day.selected,
-.flatpickr-day.selected:hover {
-    background: var(--color-gold) !important;
-    border-color: var(--color-gold) !important;
-    color: var(--color-black) !important;
-    font-weight: bold !important;
-    opacity: 1 !important;
-    text-decoration: none !important;
-}
-
-/* Текущий день */
-.flatpickr-day.today {
-    border-color: var(--color-gold) !important;
-    background: rgba(201, 162, 39, 0.2) !important;
-}
-
-.flatpickr-day.today.selected {
-    border-color: var(--color-gold) !important;
-    background: var(--color-gold) !important;
-}
-
-/* Выходные дни (доступные) */
-.flatpickr-day:not(.disabled):not(.prevMonthDay):not(.nextMonthDay).weekend {
-    color: var(--color-gold-light) !important;
-}
-
-/* Выходные дни (недоступные) */
-.flatpickr-day.disabled.weekend,
-.flatpickr-day.prevMonthDay.weekend,
-.flatpickr-day.nextMonthDay.weekend {
-    color: #555 !important;
-    opacity: 0.5 !important;
-}
 /* Контейнер выбора года/месяца */
 .numInputWrapper {
     color: var(--color-gold) !important;
@@ -130,4 +24,18 @@
 .numInputWrapper input {
     color: var(--color-gold) !important;
     background: var(--color-dark) !important;
+}
+
+.form-input.error,
+.form-select.error,
+.form-textarea.error {
+    border-color: #f44336 !important;
+    background: rgba(244, 67, 54, 0.05) !important;
+}
+
+.error-message {
+    color: #f44336;
+    font-size: 0.7rem;
+    margin-top: 5px;
+    display: block;
 }

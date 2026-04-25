@@ -442,11 +442,100 @@ const FullMode = {
         this.renderServices(services);
     },
 
-    initMastersGrid() {
-        let masters = state.serviceId
-            ? (mastersByService[state.serviceId] || []).map(id => MASTERS_DATA[id]).filter(Boolean)
-            : Object.values(MASTERS_DATA).filter(m => m.category === state.context.section || state.context.section === 'all');
-        this.renderMasters(masters);
+initMastersGrid() {
+    const grid = document.getElementById('masters-grid');
+    if (!grid) return;
+    
+    let masters = state.serviceId
+        ? (mastersByService[state.serviceId] || []).map(id => MASTERS_DATA[id]).filter(Boolean)
+        : Object.values(MASTERS_DATA).filter(m => m.category === state.context.section || state.context.section === 'all');
+    
+    grid.innerHTML = masters.map(m => `
+        <div class="booking-master" data-master-id="${m.id}">
+            <div class="booking-master__avatar"><img src="${m.image || 'assets/images/placeholder.jpg'}" alt="${m.name}"></div>
+            <div class="booking-master__info">
+                <h4>${m.name}</h4>
+                <p>${m.specialty || 'мастер'}</p>
+                <div>★★★★★ 5,0</div>
+                <div class="master-slots-container" data-master="${m.id}" style="display: none; margin-top: 10px;">
+                    <div class="slots-title"> Ближайшие слоты:</div>
+                    <div class="slots-buttons"></div>
+                </div>
+            </div>
+            <div class="booking-master__select"></div>
+        </div>
+    `).join('');
+    
+    // Загружаем слоты для каждого мастера
+    masters.forEach(async (master) => {
+        const slotsContainer = document.querySelector(`.master-slots-container[data-master="${master.id}"]`);
+        if (!slotsContainer) return;
+        
+        const slots = await loadNearestSlotsForMaster(master.id);
+        const slotsButtons = slotsContainer.querySelector('.slots-buttons');
+        
+        if (slots && slots.length > 0) {
+            slotsButtons.innerHTML = slots.map(slot => `
+                <button class="slot-btn" data-date="${slot.date}" data-time="${slot.time}">
+                    ${formatDateShort(slot.date)} ${slot.time}
+                </button>
+            `).join('');
+            
+            slotsButtons.querySelectorAll('.slot-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    
+                    // Сохраняем мастера, дату и время
+                    state.masterId = master.id;
+                    state.selectedDate = parseDate(btn.dataset.date);
+                    state.selectedTime = btn.dataset.time;
+                    
+                    // Находим услуги этого мастера
+                    const servicesForMaster = getMasterServices(state.masterId);
+                    if (servicesForMaster.length) {
+                        const allServices = getServicesList();
+                        const filtered = allServices.filter(s => servicesForMaster.includes(s.id));
+                        
+                        // Показываем услуги мастера
+                        const servicesGrid = document.getElementById('services-grid');
+                        if (servicesGrid) {
+                            servicesGrid.innerHTML = filtered.map(s => `
+                                <div class="booking-service" data-service-id="${s.id}">
+                                    <div class="booking-service__info">
+                                        <h4>${s.name}</h4>
+                                        <div>от ${s.basePrice}₽ • ${s.time}</div>
+                                    </div>
+                                    <div class="booking-service__select"></div>
+                                </div>
+                            `).join('');
+                            
+                            servicesGrid.querySelectorAll('.booking-service').forEach(serviceEl => {
+                                serviceEl.addEventListener('click', () => {
+                                    servicesGrid.querySelectorAll('.booking-service').forEach(s => s.classList.remove('selected'));
+                                    serviceEl.classList.add('selected');
+                                    state.serviceId = serviceEl.dataset.serviceId;
+                                    FullMode.updateSummary();
+                                    FullMode.showScreen('client');
+                                });
+                            });
+                        }
+                        
+                        // Переключаемся на экран услуг
+                        FullMode.showScreen('service');
+                    }
+                });
+            });
+            slotsContainer.style.display = 'block';
+        }
+    });
+    
+    grid.querySelectorAll('.booking-master').forEach(el => {
+        el.addEventListener('click', () => {
+            grid.querySelectorAll('.booking-master').forEach(m => m.classList.remove('selected'));
+            el.classList.add('selected');
+            state.masterId = el.dataset.masterId;
+        });
+    });
     },
 
     renderDays() {
@@ -586,29 +675,83 @@ const FullMode = {
         const phone = document.getElementById('phone')?.value;
         const email = document.getElementById('email')?.value;
         const comment = document.getElementById('comment')?.value || '';
-        if (!name || !phone || !state.serviceId || !state.masterId || !state.selectedDate || !state.selectedTime) {
-            showNotification('Заполните все поля');
-            return;
-        }
-        if (!/^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/.test(phone)) {
-            showNotification('Введите корректный номер телефона');
-            return;
-        }
-        if (!email) { showNotification('Введите email'); return; }
-        const master = MASTERS_DATA[state.masterId];
-        const booking = {
-            name, phone, email,
-            service: getServiceName(state.serviceId), master: master?.name || state.masterId,
-            masterLevel: master?.specialty || '', date: formatDate(state.selectedDate), time: state.selectedTime,
-            price: getTotalPrice(), comment, createdAt: new Date().toISOString()
-        };
-        const btn = document.getElementById('submit-booking');
-        const original = btn.textContent;
-        btn.textContent = 'Отправка...';
-        btn.disabled = true;
-        try {
-            const res = await fetch(`${API_URL}/bookings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(booking) });
-            const data = await res.json();
+            document.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(el => {
+        el.classList.remove('error');
+        const msg = el.parentNode?.querySelector('.error-message');
+        if (msg) msg.remove();
+    });
+    
+    let isValid = true;
+    
+    if (!name || name.trim() === '') {
+        const nameInput = document.getElementById('name');
+        nameInput.classList.add('error');
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'error-message';
+        errorSpan.textContent = 'Введите имя';
+        nameInput.parentNode.appendChild(errorSpan);
+        isValid = false;
+    }
+    
+    const phoneRegex = /^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/;
+    if (!phone || !phoneRegex.test(phone)) {
+        const phoneInput = document.getElementById('phone');
+        phoneInput.classList.add('error');
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'error-message';
+        errorSpan.textContent = 'Введите номер в формате +7 (XXX) XXX-XX-XX';
+        phoneInput.parentNode.appendChild(errorSpan);
+        isValid = false;
+    }
+    
+    const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+        const emailInput = document.getElementById('email');
+        emailInput.classList.add('error');
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'error-message';
+        errorSpan.textContent = 'Введите корректный email (пример: name@mail.ru)';
+        emailInput.parentNode.appendChild(errorSpan);
+        isValid = false;
+    }
+    
+    if (!state.serviceId) {
+        showNotification('Выберите услугу');
+        return;
+    }
+    if (!state.masterId) {
+        showNotification('Выберите мастера');
+        return;
+    }
+    if (!state.selectedDate || !state.selectedTime) {
+        showNotification('Выберите дату и время');
+        return;
+    }
+    
+    if (!isValid) return;
+    
+    const master = MASTERS_DATA[state.masterId];
+    const booking = {
+        name: name.trim(),
+        phone, email,
+        service: getServiceName(state.serviceId),
+        master: master?.name || state.masterId,
+        masterLevel: master?.specialty || '',
+        date: formatDate(state.selectedDate),
+        time: state.selectedTime,
+        price: getTotalPrice(),
+        comment,
+        createdAt: new Date().toISOString()
+    };
+    
+    const btn = document.getElementById('submit-booking');
+    const original = btn.textContent;
+    btn.textContent = 'Отправка...';
+    btn.disabled = true;
+    
+    try {
+        const res = await fetch(`${API_URL}/bookings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(booking) });
+        const data = await res.json();
             if (data.success) {
                 showNotification('✅ Запись сохранена!');
                 setTimeout(() => {
@@ -639,11 +782,13 @@ const FullMode = {
         state.weekendSurcharge = 0;
         state.currentMonth = new Date();
         state.email = null;
-        if (document.getElementById('email')) document.getElementById('email').value = '';
-        ['name', 'phone', 'comment'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = '';
-        });
+        ['name', 'phone', 'email', 'comment'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+        if (el) el.classList.remove('error');
+        const msg = el?.parentNode?.querySelector('.error-message');
+        if (msg) msg.remove();
+    });
     },
 
     attachEvents() {
@@ -866,12 +1011,12 @@ const StepMode = {
 
 initMastersGrid() {
     const grid = document.getElementById('step-masters-grid');
-    if (!grid) return;
-    
+    if (!grid) {
+        return;
+    }
     let masters = state.serviceId
         ? (mastersByService[state.serviceId] || []).map(id => MASTERS_DATA[id]).filter(Boolean)
         : Object.values(MASTERS_DATA).filter(m => m.category === state.context.section || state.context.section === 'all');
-    
     grid.innerHTML = masters.map(m => `
         <div class="booking-master" data-master-id="${m.id}">
             <div class="booking-master__avatar"><img src="${m.image || 'assets/images/placeholder.jpg'}" alt="${m.name}"></div>
@@ -879,57 +1024,56 @@ initMastersGrid() {
                 <h4>${m.name}</h4>
                 <p>${m.specialty || 'мастер'}</p>
                 <div>★★★★★ 5,0</div>
-                <div class="master-slots-container" id="slots-${m.id}" style="display: none; margin-top: 10px;">
-                    <div class="slots-title">🎯 Ближайшие слоты:</div>
+                <div class="master-slots-container" data-master="${m.id}" style="display: none; margin-top: 10px;">
+                    <div class="slots-title">Ближайшие слоты:</div>
                     <div class="slots-buttons"></div>
                 </div>
             </div>
             <div class="booking-master__select"></div>
         </div>
     `).join('');
-    
-    grid.querySelectorAll('.booking-master').forEach(async el => {
-        const masterId = el.dataset.masterId;
-        const slotsContainer = el.querySelector(`#slots-${masterId}`);
-        
-        if (slotsContainer) {
-            const slots = await loadNearestSlotsForMaster(masterId);
-            const slotsButtons = slotsContainer.querySelector('.slots-buttons');
-            
-            if (slots.length > 0) {
-                slotsButtons.innerHTML = slots.map(slot => `
-                    <button class="slot-btn" data-date="${slot.date}" data-time="${slot.time}">
-                        ${formatDateShort(slot.date)} ${slot.time}
-                    </button>
-                `).join('');
-                
-                slotsButtons.querySelectorAll('.slot-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        state.selectedDate = parseDate(btn.dataset.date);
-                        state.selectedTime = btn.dataset.time;
-                        StepMode.updateSummary();
-                        StepMode.showStep(4);
-                    });
+
+    // Загружаем слоты для каждого мастера
+    masters.forEach(async (master) => {
+        const slotsContainer = document.querySelector(`.master-slots-container[data-master="${master.id}"]`);
+        if (!slotsContainer) return;
+
+        const slots = await loadNearestSlotsForMaster(master.id);
+        const slotsButtons = slotsContainer.querySelector('.slots-buttons');
+
+        if (slots && slots.length > 0) {
+            slotsButtons.innerHTML = slots.map(slot => `
+                <button class="slot-btn" data-date="${slot.date}" data-time="${slot.time}">
+                    ${formatDateShort(slot.date)} ${slot.time}
+                </button>
+            `).join('');
+
+            slotsButtons.querySelectorAll('.slot-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    state.masterId = master.id;
+                    state.selectedDate = parseDate(btn.dataset.date);
+                    state.selectedTime = btn.dataset.time;
+                    StepMode.updateSummary();
+                    StepMode.showStep(4);
                 });
-                slotsContainer.style.display = 'block';
-            }
+            });
+            slotsContainer.style.display = 'block';
         }
-        
+    });
+    grid.querySelectorAll('.booking-master').forEach(el => {
         el.addEventListener('click', () => {
             grid.querySelectorAll('.booking-master').forEach(m => m.classList.remove('selected'));
             el.classList.add('selected');
-            state.masterId = masterId;
+            state.masterId = el.dataset.masterId;
         });
     });
-    
+
     if (state.context.presetMasterId) {
         const presetEl = document.querySelector(`.booking-master[data-master-id="${state.context.presetMasterId}"]`);
-        if (presetEl) {
-            presetEl.click();
-        }
+        if (presetEl) presetEl.click();
     }
-    },
+},
 
     renderDays() {
         const daysGrid = document.getElementById('step-days-grid');
@@ -1064,36 +1208,83 @@ initMastersGrid() {
     },
 
     async submit() {
-        const name = document.getElementById('step-name')?.value;
-        const phone = document.getElementById('step-phone')?.value;
-        const email = document.getElementById('step-email')?.value;
-        const comment = document.getElementById('step-comment')?.value || '';
-        if (!name || !phone || !state.serviceId || !state.masterId || !state.selectedDate || !state.selectedTime) {
-            showNotification('Заполните все поля');
-            return;
-        }
-        if (!/^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/.test(phone)) {
-            showNotification('Введите корректный номер телефона');
-            return;
-        }
-        if (!email) {
-            showNotification('Введите email');
-            return;
-        }
-        const master = MASTERS_DATA[state.masterId];
-        const booking = {
-            name, phone, email,
-            service: getServiceName(state.serviceId), master: master?.name || state.masterId,
-            masterLevel: master?.specialty || '', date: formatDate(state.selectedDate), time: state.selectedTime,
-            price: getTotalPrice(), comment, createdAt: new Date().toISOString()
-        };
-        const btn = document.getElementById('step-submit');
-        const original = btn.textContent;
-        btn.textContent = 'Отправка...';
-        btn.disabled = true;
-        try {
-            const res = await fetch(`${API_URL}/bookings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(booking) });
-            const data = await res.json();
+            document.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(el => {
+        el.classList.remove('error');
+        const msg = el.parentNode?.querySelector('.error-message');
+        if (msg) msg.remove();
+    });
+    
+    let isValid = true;
+    
+    if (!name || name.trim() === '') {
+        const nameInput = document.getElementById('name');
+        nameInput.classList.add('error');
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'error-message';
+        errorSpan.textContent = 'Введите имя';
+        nameInput.parentNode.appendChild(errorSpan);
+        isValid = false;
+    }
+    
+    const phoneRegex = /^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/;
+    if (!phone || !phoneRegex.test(phone)) {
+        const phoneInput = document.getElementById('phone');
+        phoneInput.classList.add('error');
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'error-message';
+        errorSpan.textContent = 'Введите номер в формате +7 (XXX) XXX-XX-XX';
+        phoneInput.parentNode.appendChild(errorSpan);
+        isValid = false;
+    }
+    
+    const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+        const emailInput = document.getElementById('email');
+        emailInput.classList.add('error');
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'error-message';
+        errorSpan.textContent = 'Введите корректный email (пример: name@mail.ru)';
+        emailInput.parentNode.appendChild(errorSpan);
+        isValid = false;
+    }
+    
+    if (!state.serviceId) {
+        showNotification('Выберите услугу');
+        return;
+    }
+    if (!state.masterId) {
+        showNotification('Выберите мастера');
+        return;
+    }
+    if (!state.selectedDate || !state.selectedTime) {
+        showNotification('Выберите дату и время');
+        return;
+    }
+    
+    if (!isValid) return;
+    
+    const master = MASTERS_DATA[state.masterId];
+    const booking = {
+        name: name.trim(),
+        phone, email,
+        service: getServiceName(state.serviceId),
+        master: master?.name || state.masterId,
+        masterLevel: master?.specialty || '',
+        date: formatDate(state.selectedDate),
+        time: state.selectedTime,
+        price: getTotalPrice(),
+        comment,
+        createdAt: new Date().toISOString()
+    };
+    
+    const btn = document.getElementById('submit-booking');
+    const original = btn.textContent;
+    btn.textContent = 'Отправка...';
+    btn.disabled = true;
+    
+    try {
+        const res = await fetch(`${API_URL}/bookings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(booking) });
+        const data = await res.json();
             if (data.success) {
                 showNotification('✅ Запись сохранена!');
                 setTimeout(() => {
@@ -1123,10 +1314,14 @@ initMastersGrid() {
         state.busySlots = new Set();
         state.weekendSurcharge = 0;
         state.currentMonth = new Date();
-        ['step-name', 'step-phone', 'step-email', 'step-comment'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = '';
-        });
+        state.email = null;
+        ['name', 'phone', 'email', 'comment'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+        if (el) el.classList.remove('error');
+        const msg = el?.parentNode?.querySelector('.error-message');
+        if (msg) msg.remove();
+    });
     },
 
     attachEvents() {

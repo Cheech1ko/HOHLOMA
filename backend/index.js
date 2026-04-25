@@ -8,6 +8,11 @@ const { saveBooking, getAllBookings, pool } = require('./database');
 const app = express();
 const port = process.env.PORT || 3001;
 
+app.use(cors({
+    origin: ['http://127.0.0.1:5500', 'http://localhost:5500', 'https://cheech1ko.github.io']
+}));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, '..')));
 
 const MASTERS_DATA = {
     'daniil-tattoo': { name: 'Даниил Грачёв' },
@@ -175,11 +180,6 @@ app.get('/api/bookings/check', async (req, res) => {
     }
 });
 
-app.use(cors({
-    origin: ['http://127.0.0.1:5500', 'http://localhost:5500', 'https://cheech1ko.github.io']
-}));
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '..')));
 
 app.patch('/api/admin/bookings/:id', async (req, res) => {
     try {

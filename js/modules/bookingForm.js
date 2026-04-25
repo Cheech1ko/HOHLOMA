@@ -187,20 +187,20 @@ function generateMonthDays(date) {
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
+    
     let startOffset = firstDay.getDay() - 1;
     if (startOffset === -1) startOffset = 6;
+    
     const days = [];
-    const prevMonthLastDay = new Date(year, month, 0).getDate();
-    for (let i = startOffset - 1; i >= 0; i--) {
-        days.push({ date: new Date(year, month - 1, prevMonthLastDay - i), isCurrentMonth: false });
+    
+    for (let i = 0; i < startOffset; i++) {
+        days.push({ date: null, isEmpty: true });
     }
+    
     for (let i = 1; i <= lastDay.getDate(); i++) {
-        days.push({ date: new Date(year, month, i), isCurrentMonth: true });
+        days.push({ date: new Date(year, month, i), isEmpty: false });
     }
-    const remaining = 42 - days.length;
-    for (let i = 1; i <= remaining; i++) {
-        days.push({ date: new Date(year, month + 1, i), isCurrentMonth: false });
-    }
+    
     return days;
 }
 
@@ -311,68 +311,89 @@ const Templates = {
     `,
     step: `
         <div class="modal-booking__close-btn" id="modal-close">✕</div>
-        <div class="booking-steps__nav">
-            <div class="booking-steps__step" data-step="1"><span class="booking-steps__number">1</span><span class="booking-steps__label">Услуги</span></div>
-            <div class="booking-steps__step" data-step="2"><span class="booking-steps__number">2</span><span class="booking-steps__label">Мастер</span></div>
-            <div class="booking-steps__step" data-step="3"><span class="booking-steps__number">3</span><span class="booking-steps__label">Время</span></div>
-            <div class="booking-steps__step" data-step="4"><span class="booking-steps__number">4</span><span class="booking-steps__label">Данные</span></div>
+    <div class="booking-steps__nav">
+        <div class="booking-steps__step" data-step="1"><span class="booking-steps__number">1</span><span class="booking-steps__label">Услуги</span></div>
+        <div class="booking-steps__step" data-step="2"><span class="booking-steps__number">2</span><span class="booking-steps__label">Мастер</span></div>
+        <div class="booking-steps__step" data-step="3"><span class="booking-steps__number">3</span><span class="booking-steps__label">Время</span></div>
+        <div class="booking-steps__step" data-step="4"><span class="booking-steps__number">4</span><span class="booking-steps__label">Данные</span></div>
+    </div>
+    
+    <!-- ШАГ 1: УСЛУГИ -->
+    <div class="booking-step" data-step="1">
+        <div class="booking-step__header">
+            <button class="booking-step__back" data-prev="1" style="visibility: hidden;">← Назад</button>
+            <h3>Выберите услугу</h3>
+            <div style="width: 80px;"></div>
         </div>
-        <div class="booking-step" data-step="1"><h3>Выберите услугу</h3><div class="booking-services__grid" id="step-services-grid"></div><div class="booking-step__actions"><button class="btn btn--primary btn-next" data-next="2">Далее</button></div></div>
-        <div class="booking-step" data-step="2" style="display:none;">
+        <div class="booking-services__grid" id="step-services-grid"></div>
+        <div class="booking-step__footer">
+            <button class="btn btn--primary btn-next" data-next="2">Далее</button>
+        </div>
+    </div>
+    
+    <!-- ШАГ 2: МАСТЕРА -->
+    <div class="booking-step" data-step="2" style="display:none;">
+        <div class="booking-step__header">
+            <button class="booking-step__back" data-prev="1">← Назад</button>
             <h3>Выберите мастера</h3>
-            <div class="booking-masters__grid" id="step-masters-grid"></div>
-            
-            <div id="step-master-slots-container" style="display: none; margin-top: 20px;">
-                <div class="slots-title"> Ближайшие свободные слоты:</div>
-                <div class="slots-buttons" id="step-nearest-slots-list"></div>
-            </div>
-            
-            <div class="booking-step__actions">
-                <button class="btn btn--outline btn-prev" data-prev="1">Назад</button>
-                <button class="btn btn--primary btn-next" data-next="3">Далее</button>
-            </div>
+            <div style="width: 80px;"></div>
         </div>
-        <div class="booking-step" data-step="3" style="display:none;">
+        <div class="booking-masters__grid" id="step-masters-grid"></div>
+        <div class="booking-step__footer">
+            <button class="btn btn--primary btn-next" data-next="3">Далее</button>
+        </div>
+    </div>
+    
+    <!-- ШАГ 3: ДАТА И ВРЕМЯ -->
+    <div class="booking-step" data-step="3" style="display:none;">
+        <div class="booking-step__header">
+            <button class="booking-step__back" data-prev="2">← Назад</button>
             <h3>Выберите дату и время</h3>
-            <div class="time-calendar">
-                <div class="price-preview" id="step-price-preview-calendar">
-                    <span> Итого: </span>
-                    <strong id="step-calendar-price-display">0 ₽</strong>
-                </div>
-                <div class="time-calendar__header">
-                    <button class="time-calendar__prev" id="step-calendar-prev">‹</button>
-                    <div class="time-calendar__month" id="step-calendar-month">Апрель 2026</div>
-                    <button class="time-calendar__next" id="step-calendar-next">›</button>
-                </div>
-                <div class="time-calendar__weekdays">
-                    <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
-                </div>
-                <div class="time-calendar__days" id="step-days-grid"></div>
-                <div class="time-calendar__slots-wrapper" id="step-slots-wrapper">
-                    <div class="time-calendar__slots" id="step-slots-grid"></div>
-                </div>
+            <div style="width: 80px;"></div>
+        </div>
+        <div class="time-calendar">
+            <div class="price-preview" id="step-price-preview-calendar">
+                <span>Итого: </span>
+                <strong id="step-calendar-price-display">0 ₽</strong>
             </div>
-            <div class="booking-step__actions">
-                <button class="btn btn--outline btn-prev" data-prev="2">Назад</button>
-                <button class="btn btn--primary" id="step-time-next">Далее</button>
+            <div class="time-calendar__header">
+                <button class="time-calendar__prev" id="step-calendar-prev">‹</button>
+                <div class="time-calendar__month" id="step-calendar-month">Апрель 2026</div>
+                <button class="time-calendar__next" id="step-calendar-next">›</button>
+            </div>
+            <div class="time-calendar__weekdays">
+                <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+            </div>
+            <div class="time-calendar__days" id="step-days-grid"></div>
+            <div class="time-calendar__slots-wrapper" id="step-slots-wrapper">
+                <div class="time-calendar__slots" id="step-slots-grid"></div>
             </div>
         </div>
-        <div class="booking-step" data-step="4" style="display:none;">
+        <div class="booking-step__footer">
+            <button class="btn btn--primary" id="step-time-next">Далее</button>
+        </div>
+    </div>
+    
+    <!-- ШАГ 4: ДАННЫЕ КЛИЕНТА -->
+    <div class="booking-step" data-step="4" style="display:none;">
+        <div class="booking-step__header">
+            <button class="booking-step__back" data-prev="3">← Назад</button>
             <h3>Ваши данные</h3>
-            <div class="booking-summary" id="step-summary"></div>
-            <div class="form-row">
-                <div class="form-group"><label>Имя</label><input type="text" id="step-name" class="form-input" placeholder="Имя"></div>
-                <div class="form-group"><label>Телефон</label><input type="tel" id="step-phone" class="form-input" placeholder="+7 (___) ___-__-__"></div>
-            </div>
-            <div class="form-group"><label>Email *</label><input type="email" id="step-email" class="form-input" placeholder="example@mail.ru" required></div>
-            <div class="form-group"><label>Комментарий</label><textarea id="step-comment" class="form-textarea" rows="3"></textarea></div>
-            <div class="form-group--policy"><input type="checkbox" id="step-policy" checked><label>Я согласен на обработку персональных данных</label></div>
-            <div class="booking-step__actions">
-                <button class="btn btn--outline btn-prev" data-prev="3">Назад</button>
-                <button class="btn btn--primary" id="step-submit">Записаться</button>
-            </div>
+            <div style="width: 80px;"></div>
         </div>
-    `
+        <div class="booking-summary" id="step-summary"></div>
+        <div class="form-row">
+            <div class="form-group"><label>Имя</label><input type="text" id="step-name" class="form-input" placeholder="Имя"></div>
+            <div class="form-group"><label>Телефон</label><input type="tel" id="step-phone" class="form-input" placeholder="+7 (___) ___-__-__"></div>
+        </div>
+        <div class="form-group"><label>Email *</label><input type="email" id="step-email" class="form-input" placeholder="example@mail.ru" required></div>
+        <div class="form-group"><label>Комментарий</label><textarea id="step-comment" class="form-textarea" rows="3"></textarea></div>
+        <div class="form-group--policy"><input type="checkbox" id="step-policy" checked><label>Я согласен на обработку персональных данных</label></div>
+        <div class="booking-step__footer">
+            <button class="btn btn--primary" id="step-submit">Записаться</button>
+        </div>
+    </div>
+`
 };
 
 const FullMode = {
@@ -539,30 +560,37 @@ initMastersGrid() {
     },
 
     renderDays() {
-        const daysGrid = document.getElementById('full-days-grid');
-        if (!daysGrid) return;
-        const monthSpan = document.getElementById('full-calendar-month');
-        if (monthSpan) {
-            monthSpan.textContent = `${monthNames[state.currentMonth.getMonth()]} ${state.currentMonth.getFullYear()}`;
+const daysGrid = document.getElementById('full-days-grid');
+    if (!daysGrid) return;
+    
+    const monthSpan = document.getElementById('full-calendar-month');
+    if (monthSpan) {
+        monthSpan.textContent = `${monthNames[state.currentMonth.getMonth()]} ${state.currentMonth.getFullYear()}`;
+    }
+    
+    const days = generateMonthDays(state.currentMonth);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    daysGrid.innerHTML = days.map(day => {
+        if (day.isEmpty) {
+            return `<div class="time-calendar__day empty"></div>`;
         }
-        const days = generateMonthDays(state.currentMonth);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        daysGrid.innerHTML = days.map(day => {
-            if (day.isEmpty || !day.date) {
-                return `<div class="time-calendar__day empty"></div>`;
-            }
-            const dayDate = new Date(day.date);
-            dayDate.setHours(0, 0, 0, 0);
-            const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
-            const isPast = dayDate < today;
-            const isSelected = state.selectedDate && formatDate(day.date) === formatDate(state.selectedDate);
-            let classes = 'time-calendar__day';
-            if (isSelected) classes += ' selected';
-            if (isPast) classes += ' disabled';
-            if (isWeekend) classes += ' weekend';
-            return `<div class="${classes}" data-date="${formatDate(day.date)}">${day.date.getDate()}</div>`;
-        }).join('');
+        
+        const dayDate = new Date(day.date);
+        dayDate.setHours(0, 0, 0, 0);
+        
+        const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
+        const isPast = dayDate < today;
+        const isSelected = state.selectedDate && formatDate(day.date) === formatDate(state.selectedDate);
+        
+        let classes = 'time-calendar__day';
+        if (isSelected) classes += ' selected';
+        if (isPast) classes += ' disabled';
+        if (isWeekend) classes += ' weekend';
+        
+        return `<div class="${classes}" data-date="${formatDate(day.date)}">${day.date.getDate()}</div>`;
+    }).join('');
         daysGrid.querySelectorAll('.time-calendar__day:not(.disabled)').forEach(el => {
             el.addEventListener('click', async () => {
                 daysGrid.querySelectorAll('.time-calendar__day').forEach(d => d.classList.remove('selected'));
@@ -811,7 +839,18 @@ initMastersGrid() {
                 }
             });
         });
+        document.querySelectorAll('[data-back]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.dataset.back;
+                if (target === 'time') {
 
+                this.initTimeCalendar();
+                this.showScreen('time');
+            } else {
+                this.showScreen(target);
+            }
+        });
+    });
         document.getElementById('start-next')?.addEventListener('click', async () => {
             if (!state.serviceId && !state.masterId) {
                 showNotification('Выберите услугу или мастера');
@@ -1338,6 +1377,17 @@ initMastersGrid() {
                     return;
                 }
                 StepMode.showStep(nextStep);
+            });
+        });
+
+        document.querySelectorAll('.booking-step__back').forEach(btn => {
+            btn.addEventListener('click', () => {
+            const prevStep = parseFloat(btn.dataset.prev);
+            if (prevStep === 1 && state.masterId && !state.serviceId) {
+                StepMode.showStep(2);
+                } else {
+                    StepMode.showStep(prevStep);
+                }
             });
         });
         

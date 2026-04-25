@@ -107,12 +107,11 @@ app.get('/api/nearest-slots', async (req, res) => {
             }
         }
         
-
         const now = new Date();
         const currentHour = now.getHours();
         const currentMinute = now.getMinutes();
         
-        const filteredSlots = allSlots.filter(slot => {
+        const availableSlots = allSlots.filter(slot => {
             const [slotDay, slotMonth, slotYear] = slot.date.split('.').map(Number);
             const slotDate = new Date(slotYear, slotMonth - 1, slotDay);
             
@@ -124,7 +123,15 @@ app.get('/api/nearest-slots', async (req, res) => {
             return true;
         });
         
-        const nearestSlots = filteredSlots.slice(0, 3);
+        const nearestSlots = [];
+        const usedDates = new Set();
+        for (const slot of availableSlots) {
+            if (!usedDates.has(slot.date)) {
+                usedDates.add(slot.date);
+                nearestSlots.push(slot);
+                if (nearestSlots.length === 3) break;
+            }
+        }
         
         res.json({ slots: nearestSlots });
     } catch (err) {

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Страница не найдена | Хохлома</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(201, 162, 39, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .error-container {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            padding: 20px;
+            max-width: 600px;
+        }
+
+        .error-code {
+            font-family: 'Playfair Display', serif;
+            font-size: 8rem;
+            font-weight: 700;
+            color: #c9a227;
+            line-height: 1;
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px rgba(201,162,39,0.3);
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% {
+                text-shadow: 0 0 20px rgba(201,162,39,0.3);
+            }
+            50% {
+                text-shadow: 0 0 40px rgba(201,162,39,0.6);
+            }
+        }
+        
+        .error-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .error-text {
+            font-size: 1rem;
+            color: #aaa;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .error-actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 28px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .btn--primary {
+            background: #c9a227;
+            color: #0a0a0a;
+            border: none;
+        }
+        
+        .btn--primary:hover {
+            background: #dbb957;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(201,162,39,0.3);
+        }
+        
+        .btn--outline {
+            background: transparent;
+            color: #c9a227;
+            border: 2px solid #c9a227;
+        }
+        
+        .btn--outline:hover {
+            background: #c9a227;
+            color: #0a0a0a;
+            transform: translateY(-2px);
+        }
+        
+        /* Декоративные элементы */
+        .decor {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #333;
+        }
+        
+        @media (max-width: 768px) {
+            .error-code {
+                font-size: 5rem;
+            }
+            .error-title {
+                font-size: 1.5rem;
+            }
+            .error-text {
+                font-size: 0.9rem;
+            }
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-code">404</div>
+        <h1 class="error-title">Страница не найдена</h1>
+        <p class="error-text">
+            К сожалению, запрашиваемая страница не существует.<br>
+            Возможно, она была перемещена или удалена.
+        </p>
+        <div class="error-actions">
+            <a href="/" class="btn btn--primary">🏠 На главную</a>
+            <a href="javascript:history.back()" class="btn btn--outline">↩️ Вернуться назад</a>
+        </div>
+    </div>
+    <div class="decor">
+        Хохлома — Тату, барбершоп, пирсинг, массаж в Пензе
+    </div>
+</body>
+</html>

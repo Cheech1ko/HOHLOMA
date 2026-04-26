@@ -23,21 +23,36 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('❌ Error initializing modules:', error);
     }
 });
-
+document.querySelectorAll('.footer__link[data-section-link]').forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = link.getAttribute('href');
+        const activeSection = document.querySelector('.service-content--active');
+        
+        if (activeSection) {
+            const targetElement = activeSection.querySelector(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                const fallbackElement = document.querySelector(targetId);
+                if (fallbackElement) {
+                    fallbackElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        }
+    });
+});
 window.addEventListener('load', () => {
         const preloader = document.getElementById('preloader');
         if (preloader) {
-            // Даём время на анимацию пульсации
             setTimeout(() => {
                 preloader.classList.add('preloader--hidden');
-                // Убираем из DOM после исчезновения (необязательно)
                 setTimeout(() => {
                     preloader.style.display = 'none';
                 }, 800);
             }, 800);
         }
         
-        // Анимации запускаем после исчезновения прелоадера
         setTimeout(() => {
             initAnimations();
         }, 1600);

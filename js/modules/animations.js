@@ -10,7 +10,6 @@ export function initAnimations() {
         gsap.registerPlugin(ScrollTrigger);
     }
 
-    // === ФУНКЦИЯ АНИМАЦИИ ФОНА HERO ===
     function animateHeroBg(container) {
         if (!container) return;
         
@@ -19,13 +18,10 @@ export function initAnimations() {
         
         const heroBg = hero.querySelector('.hero__bg img') || hero;
         
-        // Убиваем предыдущие анимации
         gsap.killTweensOf(heroBg);
         
-        // Устанавливаем начальное состояние
         gsap.set(heroBg, { scale: 1 });
         
-        // Анимация масштабирования
         gsap.to(heroBg, {
             scale: 1,
             duration: 1.8,
@@ -34,14 +30,11 @@ export function initAnimations() {
         });
     }
     
-    // === ФУНКЦИЯ АНИМАЦИИ КОНТЕЙНЕРА ===
     function animateContainer(container) {
         if (!container) return;
         
-        // Анимация фона hero
         animateHeroBg(container);
         
-        // 1. ЗАГОЛОВКИ СЕКЦИЙ — снизу вверх
         container.querySelectorAll('.section-title').forEach(el => {
             gsap.fromTo(el,
                 { opacity: 0, y: 50 },
@@ -60,7 +53,6 @@ export function initAnimations() {
             );
         });
         
-        // 2. ТЕКСТОВЫЕ БЛОКИ (about, price__intro) — снизу вверх
         container.querySelectorAll('.about__content, .price__intro').forEach(el => {
             gsap.fromTo(el,
                 { opacity: 0, y: 40 },
@@ -79,7 +71,6 @@ export function initAnimations() {
             );
         });
         
-        // 3. ИНФО КАРТОЧКИ (пирсинг/массаж) — снизу вверх с каскадом
         container.querySelectorAll('.about__info-card').forEach((el, i) => {
             gsap.fromTo(el,
                 { opacity: 0, y: 40, scale: 0.95 },
@@ -100,7 +91,6 @@ export function initAnimations() {
             );
         });
         
-        // 4. КАРТОЧКИ МАСТЕРОВ — снизу вверх с каскадом
         container.querySelectorAll('.team-card').forEach((el, i) => {
             gsap.fromTo(el,
                 { opacity: 0, y: 60, scale: 0.9 },
@@ -121,7 +111,6 @@ export function initAnimations() {
             );
         });
         
-        // 5. КАРТОЧКИ ПРАЙСА (тату, массаж) — снизу вверх с каскадом
         container.querySelectorAll('.price__master-card, .price__category, .price__card').forEach((el, i) => {
             gsap.fromTo(el,
                 { opacity: 0, y: 50 },
@@ -141,9 +130,8 @@ export function initAnimations() {
             );
         });
         
-        // 6. ЭЛЕМЕНТЫ ПРАЙС-ТАБЛИЦЫ (каждая строка) — слева направо
         container.querySelectorAll('.price__table tr').forEach((row, i) => {
-            if (i === 0) return; // пропускаем заголовок
+            if (i === 0) return; 
             gsap.fromTo(row,
                 { opacity: 0, x: -30 },
                 {
@@ -162,7 +150,6 @@ export function initAnimations() {
             );
         });
         
-        // 7. ЭЛЕМЕНТЫ ПОРТФОЛИО — чётные слева, нечётные справа
         container.querySelectorAll('.portfolio__item').forEach((el, i) => {
             const fromX = i % 2 === 0 ? -50 : 50;
             gsap.fromTo(el,
@@ -184,7 +171,6 @@ export function initAnimations() {
             );
         });
         
-        // 8. ФИЧИ (about__features) — каскад с разных сторон
         container.querySelectorAll('.about__feature').forEach((el, i) => {
             const fromY = i % 2 === 0 ? -30 : 30;
             gsap.fromTo(el,
@@ -205,7 +191,6 @@ export function initAnimations() {
             );
         });
         
-        // 9. КНОПКИ В ПРАЙСЕ — пульсация при появлении
         container.querySelectorAll('.price__book, .price__buttons .btn').forEach(btn => {
             gsap.fromTo(btn,
                 { opacity: 0, scale: 0.9 },
@@ -224,7 +209,6 @@ export function initAnimations() {
         });
     }
     
-    // === ЗАПУСКАЕМ АНИМАЦИИ ===
     function animateCurrent() {
         const activeContent = document.querySelector('.service-content--active');
         if (activeContent) {
@@ -232,15 +216,12 @@ export function initAnimations() {
         }
     }
     
-    // Запускаем при загрузке
     setTimeout(animateCurrent, 200);
     
-    // При смене раздела — перезапускаем анимации
     window.addEventListener('serviceChanged', () => {
         setTimeout(animateCurrent, 150);
     });
     
-    // === ЭФФЕКТ НАВЕДЕНИЯ ДЛЯ КАРТОЧЕК ===
     document.querySelectorAll('.team-card, .price__master-card, .price__category, .portfolio__item, .about__info-card').forEach(card => {
         card.addEventListener('mouseenter', () => {
             gsap.to(card, {
@@ -312,7 +293,6 @@ export function initAnimations() {
         });
     });
     
-    // === ПРЕЛОАДЕР ===
     const preloader = document.getElementById('preloader');
     if (preloader) {
         gsap.to(preloader, {

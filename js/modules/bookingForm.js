@@ -1247,56 +1247,73 @@ initMastersGrid() {
     },
 
     async submit() {
-            document.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(el => {
-        el.classList.remove('error');
-        const msg = el.parentNode?.querySelector('.error-message');
-        if (msg) msg.remove();
+    console.log('🔴 StepMode.submit started');
+    
+    const nameInput = document.getElementById('step-name');
+    const phoneInput = document.getElementById('step-phone');
+    const emailInput = document.getElementById('step-email');
+    const commentInput = document.getElementById('step-comment');
+    
+    const name = nameInput?.value || '';
+    const phone = phoneInput?.value || '';
+    const email = emailInput?.value || '';
+    const comment = commentInput?.value || '';
+    
+    [nameInput, phoneInput, emailInput].forEach(input => {
+        if (input) {
+            input.classList.remove('error');
+            const msg = input.parentNode?.querySelector('.error-message');
+            if (msg) msg.remove();
+        }
     });
     
     let isValid = true;
     
     if (!name || name.trim() === '') {
-        const nameInput = document.getElementById('name');
-        nameInput.classList.add('error');
-        const errorSpan = document.createElement('span');
-        errorSpan.className = 'error-message';
-        errorSpan.textContent = 'Введите имя';
-        nameInput.parentNode.appendChild(errorSpan);
+        if (nameInput) {
+            nameInput.classList.add('error');
+            const errorSpan = document.createElement('span');
+            errorSpan.className = 'error-message';
+            errorSpan.textContent = 'Введите имя';
+            nameInput.parentNode.appendChild(errorSpan);
+        }
         isValid = false;
     }
     
     const phoneRegex = /^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/;
     if (!phone || !phoneRegex.test(phone)) {
-        const phoneInput = document.getElementById('phone');
-        phoneInput.classList.add('error');
-        const errorSpan = document.createElement('span');
-        errorSpan.className = 'error-message';
-        errorSpan.textContent = 'Введите номер в формате +7 (XXX) XXX-XX-XX';
-        phoneInput.parentNode.appendChild(errorSpan);
+        if (phoneInput) {
+            phoneInput.classList.add('error');
+            const errorSpan = document.createElement('span');
+            errorSpan.className = 'error-message';
+            errorSpan.textContent = 'Введите номер в формате +7 (XXX) XXX-XX-XX';
+            phoneInput.parentNode.appendChild(errorSpan);
+        }
         isValid = false;
     }
     
     const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
-        const emailInput = document.getElementById('email');
-        emailInput.classList.add('error');
-        const errorSpan = document.createElement('span');
-        errorSpan.className = 'error-message';
-        errorSpan.textContent = 'Введите корректный email (пример: name@mail.ru)';
-        emailInput.parentNode.appendChild(errorSpan);
+        if (emailInput) {
+            emailInput.classList.add('error');
+            const errorSpan = document.createElement('span');
+            errorSpan.className = 'error-message';
+            errorSpan.textContent = 'Введите корректный email';
+            emailInput.parentNode.appendChild(errorSpan);
+        }
         isValid = false;
     }
     
     if (!state.serviceId) {
-        showNotification('Выберите услугу');
+        alert('Выберите услугу');
         return;
     }
     if (!state.masterId) {
-        showNotification('Выберите мастера');
+        alert('Выберите мастера');
         return;
     }
     if (!state.selectedDate || !state.selectedTime) {
-        showNotification('Выберите дату и время');
+        alert('Выберите дату и время');
         return;
     }
     
@@ -1305,7 +1322,8 @@ initMastersGrid() {
     const master = MASTERS_DATA[state.masterId];
     const booking = {
         name: name.trim(),
-        phone, email,
+        phone,
+        email,
         service: getServiceName(state.serviceId),
         master: master?.name || state.masterId,
         masterLevel: master?.specialty || '',
@@ -1316,35 +1334,48 @@ initMastersGrid() {
         createdAt: new Date().toISOString()
     };
     
-    const btn = document.getElementById('submit-booking');
-    const original = btn.textContent;
-    btn.textContent = 'Отправка...';
-    btn.disabled = true;
+    const btn = document.getElementById('step-submit');
+    const original = btn?.textContent || 'Записаться';
+    if (btn) {
+        btn.textContent = 'Отправка...';
+        btn.disabled = true;
+    }
     
     try {
-        const res = await fetch(`${API_URL}/bookings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(booking) });
+        const res = await fetch(`${API_URL}/bookings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(booking)
+        });
         const data = await res.json();
-            if (data.success) {
-                showNotification('✅ Запись сохранена!');
-                setTimeout(() => {
-                    const modal = document.getElementById('modal-booking');
-                    if (modal) modal.classList.remove('modal-booking--active');
+        
+        if (data.success) {
+            showNotification('✅ Запись сохранена!');
+            setTimeout(() => {
+                const modal = document.getElementById('modal-booking');
+                if (modal) {
+                    modal.classList.remove('modal-booking--active');
                     document.body.style.overflow = '';
-                }, 2000);
-            } else if (data.error === 'Это время уже занято') {
-                showNotification('❌ Это время уже занято');
-                const masterName = MASTERS_DATA[state.masterId]?.name || state.masterId;
-                await loadBusySlots(masterName, formatDate(state.selectedDate));
-                this.renderSlots();
-            } else {
-                showNotification(data.error || 'Ошибка');
-            }
-        } catch (error) {
-            showNotification('Ошибка соединения');
-        } finally {
+                }
+                StepMode.reset();
+            }, 1500);
+        } else if (data.error === 'Это время уже занято') {
+            showNotification(' Это время уже занято. Выберите другое время.');
+            const masterName = MASTERS_DATA[state.masterId]?.name || state.masterId;
+            await loadBusySlots(masterName, formatDate(state.selectedDate));
+            StepMode.renderSlots();
+        } else {
+            showNotification(data.error || 'Ошибка при сохранении');
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        showNotification('Ошибка соединения с сервером');
+    } finally {
+        if (btn) {
             btn.textContent = original;
             btn.disabled = false;
         }
+    }
     },
 
     reset() {

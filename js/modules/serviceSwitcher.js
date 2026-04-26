@@ -23,6 +23,16 @@ export function initServiceSwitcher() {
                 btn.classList.add('nav__link--active');
             }
         });
+
+        setTimeout(() => {
+            const activeSection = document.querySelector('.service-content--active');
+            if (activeSection) {
+                const hero = activeSection.querySelector('.hero');
+                if (hero) {
+                    hero.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        }, 150);
         
         if (addToHistory) {
             const newUrl = `${window.location.pathname}?service=${serviceName}`;
@@ -61,6 +71,7 @@ export function initServiceSwitcher() {
     });
     
     let initialService = getServiceFromUrl();
+    
     if (!initialService) {
         initialService = localStorage.getItem('preferredService');
     }

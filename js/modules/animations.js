@@ -23,7 +23,7 @@ export function initAnimations() {
         gsap.killTweensOf(heroBg);
         
         // Устанавливаем начальное состояние
-        gsap.set(heroBg, { scale: 1.1 });
+        gsap.set(heroBg, { scale: 1 });
         
         // Анимация масштабирования
         gsap.to(heroBg, {

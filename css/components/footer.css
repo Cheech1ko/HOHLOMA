@@ -69,11 +69,24 @@
     height: 40px;
     align-items: center;
     justify-content: center;
-    transition: transform var(--transition-fast);
+    border-radius: 50%;
+    background: rgba(201, 162, 39, 0.1);
+    transition: all var(--transition-fast);
 }
 
 .footer__social-link:hover {
+    background: var(--color-gold);
     transform: translateY(-3px);
+}
+
+.footer__social-link:hover svg path,
+.footer__social-link:hover svg rect,
+.footer__social-link:hover svg circle {
+    stroke: #0a0a0a;
+}
+
+.footer__social-link:hover svg circle {
+    fill: #0a0a0a;
 }
 
 .footer__bottom {

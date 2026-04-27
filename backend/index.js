@@ -28,9 +28,152 @@ const MASTERS_DATA = {
     'alexey-massage': { name: 'Алексей Авакумов' }
 };
 
+const transporter = nodemailer.createTransport({
+    host: 'smtp.yandex.ru',
+    port: 465,
+    secure: true,
+    auth: {
+        user: 'pleshakov.iljuha@yandex.ru', // ЗАМЕНИ НА СВОЙ EMAIL
+        pass: 'verfbwqmixiovuia'      // ЗАМЕНИ НА ПАРОЛЬ ПРИЛОЖЕНИЯ
+    }
+});
+
+// Отправка письма клиенту
+async function sendClientEmail(booking) {
+    const msg = {
+        from: '"Хохлома" <pleshakov.iljuha@yandex.ru>',
+        to: booking.email,
+        subject: '✅ Подтверждение записи в студию Хохлома',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                <h2 style="color: #c9a227;">Спасибо за запись!</h2>
+                <p>Вы записаны на:</p>
+                <ul>
+                    <li><strong>Услуга:</strong> ${booking.service}</li>
+                    <li><strong>Мастер:</strong> ${booking.master}</li>
+                    <li><strong>Дата и время:</strong> ${booking.date} ${booking.time}</li>
+                    <li><strong>Цена:</strong> ${booking.price}₽</li>
+                </ul>
+                <p>При себе иметь паспорт и сменную обувь.</p>
+                <p>По вопросам: +7 (8412) 248-398</p>
+                <hr>
+                <p style="font-size: 12px; color: #666;">Это письмо создано автоматически. Пожалуйста, не отвечайте на него.</p>
+            </div>
+        `
+    };
+    
+    const info = await transporter.sendMail(msg);
+    console.log('✉️ Письмо клиенту отправлено:', info.messageId);
+    return info;
+}
+
+// Отправка письма администратору
+async function sendAdminEmail(booking) {
+    const msg = {
+        from: '"Хохлома" <pleshakov.iljuha@yandex.ru>', 
+        to: 'pleshakov.iljuha@yandex.ru',
+        subject: '📋 Новая запись на сайте',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                <h2 style="color: #c9a227;">Новая заявка</h2>
+                <p><strong>Клиент:</strong> ${booking.name}</p>
+                <p><strong>Телефон:</strong> ${booking.phone}</p>
+                <p><strong>Email:</strong> ${booking.email}</p>
+                <p><strong>Услуга:</strong> ${booking.service}</p>
+                <p><strong>Мастер:</strong> ${booking.master}</p>
+                <p><strong>Дата/время:</strong> ${booking.date} ${booking.time}</p>
+                <p><strong>Цена:</strong> ${booking.price}₽</p>
+                <p><strong>Комментарий:</strong> ${booking.comment || '—'}</p>
+                <hr>
+                <p style="font-size: 12px; color: #666;">Письмо сгенерировано автоматически</p>
+                </div>
+                `
+            };
+            
+            const info = await transporter.sendMail(msg);
+            console.log('✉️ Письмо админу отправлено:', info.messageId);
+            return info;
+        }
+
+
+app.get('/api/nearest-slots', async (req, res) => {
+            try {
+                const { masterId } = req.query;
+                const master = MASTERS_DATA[masterId];
+                const masterName = master?.name || masterId;
+                
+                const today = new Date();
+                const nextWeek = new Date();
+                nextWeek.setDate(today.getDate() + 7);
+                
+                const formatForDB = (date) => {
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const year = date.getFullYear();
+                    return `${day}.${month}.${year}`;
+                };
+                
+                const busyResult = await pool.query(
+                    `SELECT date, time FROM bookings 
+                    WHERE master = $1 
+                    AND date >= $2 AND date <= $3`,
+                    [masterName, formatForDB(today), formatForDB(nextWeek)]
+                );
+                
+                const busySet = new Set(busyResult.rows.map(r => `${r.date}|${r.time}`));
+                
+                const allSlots = [];
+                for (let i = 0; i <= 7; i++) {
+                    const date = new Date();
+                    date.setDate(today.getDate() + i);
+                    const dateStr = formatForDB(date);
+                    if (date < today) continue;
+                    
+                    for (let hour = 10; hour <= 19; hour++) {
+                        for (let minute = 0; minute < 60; minute += 15) {
+                            const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                            if (!busySet.has(`${dateStr}|${timeStr}`)) {
+                                allSlots.push({ date: dateStr, time: timeStr });
+                            }
+                        }
+                    }
+                }
+                
+                const now = new Date();
+                const currentHour = now.getHours();
+                const currentMinute = now.getMinutes();
+                
+                const availableSlots = allSlots.filter(slot => {
+                    const [slotDay, slotMonth, slotYear] = slot.date.split('.').map(Number);
+                    const slotDate = new Date(slotYear, slotMonth - 1, slotDay);
+                    
+                    if (slotDate < now) return false;
+                    if (slotDate.toDateString() === now.toDateString()) {
+                        const [slotHour, slotMinute] = slot.time.split(':').map(Number);
+                        return (slotHour > currentHour) || (slotHour === currentHour && slotMinute > currentMinute);
+                    }
+                    return true;
+                });
+                
+                const nearestSlots = [];
+                const usedDates = new Set();
+                for (const slot of availableSlots) {
+                    if (!usedDates.has(slot.date)) {
+                        usedDates.add(slot.date);
+                        nearestSlots.push(slot);
+                        if (nearestSlots.length === 3) break;
+                    }
+                }
+                
+                res.json({ slots: nearestSlots });
+            } catch (err) {
+                console.error('❌ Ошибка получения слотов:', err);
+                res.status(500).json({ error: 'Ошибка сервера' });
+            }
+        });
 
 app.get('/api/admin/bookings', async (req, res) => {
-    try {
+        try {
         const { status, master, from, to, sort, order } = req.query;
         let query = `SELECT * FROM bookings WHERE 1=1`;
         const params = [];
@@ -64,81 +207,6 @@ app.get('/api/admin/bookings', async (req, res) => {
     }
 });
 
-app.get('/api/nearest-slots', async (req, res) => {
-    try {
-        const { masterId } = req.query;
-        const master = MASTERS_DATA[masterId];
-        const masterName = master?.name || masterId;
-        
-        const today = new Date();
-        const nextWeek = new Date();
-        nextWeek.setDate(today.getDate() + 7);
-        
-        const formatForDB = (date) => {
-            const day = date.getDate().toString().padStart(2, '0');
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}.${month}.${year}`;
-        };
-        
-        const busyResult = await pool.query(
-            `SELECT date, time FROM bookings 
-            WHERE master = $1 
-            AND date >= $2 AND date <= $3`,
-            [masterName, formatForDB(today), formatForDB(nextWeek)]
-        );
-        
-        const busySet = new Set(busyResult.rows.map(r => `${r.date}|${r.time}`));
-        
-        const allSlots = [];
-        for (let i = 0; i <= 7; i++) {
-            const date = new Date();
-            date.setDate(today.getDate() + i);
-            const dateStr = formatForDB(date);
-            if (date < today) continue;
-            
-            for (let hour = 10; hour <= 19; hour++) {
-                for (let minute = 0; minute < 60; minute += 15) {
-                    const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                    if (!busySet.has(`${dateStr}|${timeStr}`)) {
-                        allSlots.push({ date: dateStr, time: timeStr });
-                    }
-                }
-            }
-        }
-        
-        const now = new Date();
-        const currentHour = now.getHours();
-        const currentMinute = now.getMinutes();
-        
-        const availableSlots = allSlots.filter(slot => {
-            const [slotDay, slotMonth, slotYear] = slot.date.split('.').map(Number);
-            const slotDate = new Date(slotYear, slotMonth - 1, slotDay);
-            
-            if (slotDate < now) return false;
-            if (slotDate.toDateString() === now.toDateString()) {
-                const [slotHour, slotMinute] = slot.time.split(':').map(Number);
-                return (slotHour > currentHour) || (slotHour === currentHour && slotMinute > currentMinute);
-            }
-            return true;
-        });
-        
-        const nearestSlots = [];
-        const usedDates = new Set();
-        for (const slot of availableSlots) {
-            if (!usedDates.has(slot.date)) {
-                usedDates.add(slot.date);
-                nearestSlots.push(slot);
-                if (nearestSlots.length === 3) break;
-            }
-        }
-        
-        res.json({ slots: nearestSlots });
-    } catch (err) {
-        console.error('❌ Ошибка получения слотов:', err);
-        res.status(500).json({ error: 'Ошибка сервера' });
-    }
-});
 
 app.post('/api/bookings', async (req, res) => {
     try {
@@ -161,6 +229,12 @@ app.post('/api/bookings', async (req, res) => {
         
         booking.createdAt = new Date().toISOString();
         const result = await saveBooking(booking);
+        try {
+            await sendClientEmail(booking);
+            await sendAdminEmail(booking);
+        } catch (err) {
+            console.error('❌ Ошибка отправки писем:', err);
+        }
         
         res.json({ success: true, message: 'Заявка сохранена', id: result.id });
     } catch (err) {

@@ -28,15 +28,6 @@ const MASTERS_DATA = {
     'alexey-massage': { name: 'Алексей Авакумов' }
 };
 
-const transporter = nodemailer.createTransport({
-    host: 'smtp.yandex.ru',
-    port: 465,
-    secure: true,
-    auth: {
-        user: 'pleshakov.iljuha@yandex.ru', // ЗАМЕНИ НА СВОЙ EMAIL
-        pass: 'verfbwqmixiovuia'      // ЗАМЕНИ НА ПАРОЛЬ ПРИЛОЖЕНИЯ
-    }
-});
 
 // Отправка письма клиенту
 async function sendClientEmail(booking) {
@@ -66,34 +57,6 @@ async function sendClientEmail(booking) {
     console.log('✉️ Письмо клиенту отправлено:', info.messageId);
     return info;
 }
-
-// Отправка письма администратору
-async function sendAdminEmail(booking) {
-    const msg = {
-        from: '"Хохлома" <pleshakov.iljuha@yandex.ru>', 
-        to: 'pleshakov.iljuha@yandex.ru',
-        subject: '📋 Новая запись на сайте',
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px;">
-                <h2 style="color: #c9a227;">Новая заявка</h2>
-                <p><strong>Клиент:</strong> ${booking.name}</p>
-                <p><strong>Телефон:</strong> ${booking.phone}</p>
-                <p><strong>Email:</strong> ${booking.email}</p>
-                <p><strong>Услуга:</strong> ${booking.service}</p>
-                <p><strong>Мастер:</strong> ${booking.master}</p>
-                <p><strong>Дата/время:</strong> ${booking.date} ${booking.time}</p>
-                <p><strong>Цена:</strong> ${booking.price}₽</p>
-                <p><strong>Комментарий:</strong> ${booking.comment || '—'}</p>
-                <hr>
-                <p style="font-size: 12px; color: #666;">Письмо сгенерировано автоматически</p>
-                </div>
-                `
-            };
-            
-            const info = await transporter.sendMail(msg);
-            console.log('✉️ Письмо админу отправлено:', info.messageId);
-            return info;
-        }
 
 
 app.get('/api/nearest-slots', async (req, res) => {
@@ -229,12 +192,6 @@ app.post('/api/bookings', async (req, res) => {
         
         booking.createdAt = new Date().toISOString();
         const result = await saveBooking(booking);
-        try {
-            await sendClientEmail(booking);
-            await sendAdminEmail(booking);
-        } catch (err) {
-            console.error('❌ Ошибка отправки писем:', err);
-        }
         
         res.json({ success: true, message: 'Заявка сохранена', id: result.id });
     } catch (err) {

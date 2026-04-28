@@ -455,13 +455,25 @@ const FullMode = {
         });
     },
 
-    initServicesGrid() {
-        let services = getServicesList();
-        if (state.context.section !== 'all') {
-            services = services.filter(s => s.category === state.context.section);
-        }
-        this.renderServices(services);
-    },
+initServicesGrid() {
+    let services = getServicesList();
+    if (state.context.section !== 'all') {
+        services = services.filter(s => s.category === state.context.section);
+    }
+    this.renderServices(services);
+    
+    document.querySelectorAll('.booking-service').forEach(el => {
+        el.addEventListener('click', () => {
+            if (state.masterId === 'any') {
+                const masterIds = mastersByService[el.dataset.serviceId];
+                if (masterIds && masterIds.length > 0) {
+                    state.masterId = masterIds[0];
+                    console.log('🎲 Выбран случайный мастер:', state.masterId);
+                }
+            }
+        });
+    });
+},
 
 initMastersGrid() {
     const grid = document.getElementById('masters-grid');
@@ -612,6 +624,12 @@ const daysGrid = document.getElementById('full-days-grid');
     renderSlots() {
         const slotsGrid = document.getElementById('full-slots-grid');
         if (!slotsGrid) return;
+
+        const isMobile = window.innerWidth <= 768;
+        const isSmallMobile = window.innerWidth <= 480;
+        const columns = isSmallMobile ? 3 : (isMobile ? 4 : 6);
+    
+        slotsGrid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
         
         slotsGrid.innerHTML = TIME_SLOTS.map(slot => {
             const isDisabled = state.busySlots.has(slot);
@@ -1020,6 +1038,12 @@ const StepMode = {
         let services = getServicesList();
         if (state.context.section !== 'all') {
             services = services.filter(s => s.category === state.context.section);
+        }
+        if (state.masterId === 'any') {
+            const masterIds = mastersByService[state.serviceId];
+        if (masterIds && masterIds.length > 0) {
+            state.masterId = masterIds[0];
+        }
         }
         if (state.context.presetMasterId) {
             const masterServices = getMasterServices(state.context.presetMasterId);

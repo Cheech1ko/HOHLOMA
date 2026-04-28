@@ -223,16 +223,25 @@ app.patch('/api/admin/bookings/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
-        await pool.query(
-            `UPDATE bookings SET status = $1, "updatedAt" = NOW() WHERE id = $2`,
+        
+        console.log(` Обновление статуса записи ${id} на ${status}`);
+        
+        const result = await pool.query(
+            `UPDATE bookings SET status = $1, "updatedAt" = NOW() WHERE id = $2 RETURNING *`,
             [status, id]
         );
-        res.json({ success: true });
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Booking not found' });
+        }
+        
+        res.json({ success: true, booking: result.rows[0] });
     } catch (err) {
         console.error(' Ошибка обновления:', err);
-        res.status(500).json({ error: 'Ошибка базы данных' });
+        res.status(500).json({ error: err.message });
     }
 });
+
 
 app.delete('/api/admin/bookings/:id', async (req, res) => {
     try {
